@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel Oficial de Justiça</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7d1d2c">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Oficial TJSP">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* VOICE everyday: a study desk tool, calm and practical
+   IDEA the officer's mandate folder: each topic is a mandado to fulfil, stamped "cumprido" in blue ink
+   PICTURE a 16-week ribbon under a big countdown, each week filling as tasks get stamped
+   COLOUR TJSP wine band, white paper, blue stamp ink for done
+   TYPE Archivo 800 + Source Sans 3
+   LAYOUT wine band (countdown + ribbon) full width, tab row, one working panel; phone stacks */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#141012);--ink:light-dark(#1b1416,#f3eeee);--muted:light-dark(#6b5f62,#b9aeb0);--wine:light-dark(#7d1d2c,#4f111b);--wine2:light-dark(#9c2c3d,#6e1a28);--line:light-dark(#e7dfe0,#30282a);--soft:light-dark(#f8f3f3,#1d1719);--stamp:light-dark(#1f4fd1,#86a7ff);--warn:light-dark(#b4531a,#f0a16b)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Source Sans 3",system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Archivo,system-ui,sans-serif;line-height:1.05;letter-spacing:-.02em;margin:0;text-wrap:balance}
+a{color:var(--stamp)}
+.band{padding:clamp(24px,4vw,48px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+.hero{background:var(--wine);color:#fff}
+.hero a{color:#fff}
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:end}
+.top h1{font-size:clamp(30px,4.4vw,48px)}
+.top p{margin:8px 0 0;opacity:.88}
+.count{text-align:right}
+.count b{display:block;font:800 clamp(56px,9vw,96px)/1 Archivo,sans-serif;letter-spacing:-.04em}
+.count span{opacity:.88}
+.ribbon{display:grid;grid-template-columns:repeat(17,minmax(0,1fr));gap:6px;margin-top:28px}
+.wk{background:rgba(255,255,255,.12);border-radius:6px;height:78px;position:relative;overflow:hidden;border:0;color:#fff;cursor:pointer;padding:0;font:inherit}
+.wk i{position:absolute;left:0;right:0;bottom:0;background:#fff;opacity:.9}
+.wk em{position:absolute;top:6px;left:0;right:0;text-align:center;font-style:normal;font-weight:700;font-size:13px;mix-blend-mode:difference}
+.wk.now{outline:3px solid #ffd2d8;outline-offset:2px}
+.wk.sel{box-shadow:inset 0 0 0 2px #fff}
+.wk.exam{background:#fff;color:var(--wine);cursor:default}
+.wk.exam em{mix-blend-mode:normal;color:var(--wine);top:auto;bottom:8px;font-size:13px;line-height:1.1}
+.stats{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:18px;font-size:15px}
+.stats b{font-size:20px;font-family:Archivo,sans-serif}
+nav{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:4px;overflow-x:auto;padding:0 max(5vw,16px)}
+nav a{flex:none;padding:14px 14px 12px;text-decoration:none;color:var(--muted);font-weight:600;border-bottom:3px solid transparent;min-height:44px}
+nav a.on{color:var(--ink);border-color:var(--wine2)}
+section{display:none}section.on{display:block}
+.lead{color:var(--muted);margin:6px 0 20px;max-width:70ch}
+.sec-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px;margin-bottom:6px}
+.sec-h h2{font-size:32px}
+.btn{font:600 15px "Source Sans 3",sans-serif;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--ink);cursor:pointer}
+.btn.pri{background:var(--wine2);border-color:var(--wine2);color:#fff}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,.wk:focus-visible{outline:3px solid var(--stamp);outline-offset:2px}
+.tasks{list-style:none;padding:0;margin:0;border-top:1px solid var(--line)}
+.tasks li{border-bottom:1px solid var(--line)}
+.chk{display:flex;gap:14px;align-items:flex-start;padding:14px 4px;cursor:pointer}
+.chk input{width:22px;height:22px;margin-top:2px;accent-color:var(--stamp);flex:none}
+.chk .t{flex:1}
+.chk small{display:block;color:var(--muted);font-size:14px}
+.chk.done .t>span{color:var(--muted);text-decoration:line-through}
+.tag{display:inline-block;font-size:13px;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--soft);border:1px solid var(--line);margin-right:6px;white-space:nowrap}
+.stampmark{flex:none;font:800 13px Archivo,sans-serif;color:var(--stamp);border:2px solid var(--stamp);border-radius:4px;padding:2px 6px;transform:rotate(-6deg);opacity:0;transition:opacity .25s}
+.done .stampmark{opacity:1}
+.subj{border:1px solid var(--line);border-radius:12px;margin-bottom:14px;background:var(--bg)}
+.subj summary{list-style:none;cursor:pointer;padding:16px 18px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;align-items:center}
+.subj summary::-webkit-details-marker{display:none}
+.subj h3{font-size:20px}
+.subj .meta{color:var(--muted);font-size:14px}
+.bar{height:8px;background:var(--soft);border-radius:99px;overflow:hidden;grid-column:1/-1;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--stamp)}
+.subj .body{padding:0 18px 12px}
+.subj .links{display:flex;flex-wrap:wrap;gap:8px 16px;margin:0 0 6px;font-weight:600}
+.pct{font:800 20px Archivo,sans-serif;white-space:nowrap}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+.panel{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--soft)}
+.panel h3{font-size:20px;margin-bottom:12px}
+form.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:12px;align-items:end}
+label{display:block;font-size:14px;font-weight:600;color:var(--muted)}
+input,select,textarea{display:block;width:100%;font:16px "Source Sans 3",sans-serif;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);margin-top:4px}
+textarea{min-height:110px;font-family:ui-monospace,monospace;font-size:13px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:14px;color:var(--muted);font-weight:700}
+td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.x{border:0;background:none;color:var(--muted);cursor:pointer;min-width:44px;min-height:36px;font-size:18px}
+.rows .r{display:grid;grid-template-columns:9em minmax(0,1fr) 4.5em;gap:10px;align-items:center;padding:6px 0}
+.rows .r b{font-weight:600;font-size:15px}
+.rows .track{height:18px;background:var(--bg);border:1px solid var(--line);border-radius:4px;position:relative}
+.rows .track i{position:absolute;left:0;top:0;bottom:0;background:var(--stamp);border-radius:3px}
+.rows .track .goal{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--wine2)}
+.ok{color:var(--stamp);font-weight:700}.no{color:var(--warn);font-weight:700}
+.empty{color:var(--muted);padding:16px 0}
+.timer{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:center}
+.clock{font:800 clamp(72px,14vw,150px)/1 Archivo,sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(15em,1fr));gap:14px}
+.facts div{border-top:3px solid var(--wine2);padding-top:10px}
+.facts b{display:block;font-family:Archivo,sans-serif;font-size:20px}
+.note{font-size:14px;color:var(--muted)}
+.h3{font-size:22px;margin:0 0 8px}
+.nw{white-space:nowrap}
+.subj h4{font:700 17px Archivo,sans-serif;margin:18px 0 4px}
+.card{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;width:100%;max-width:760px;margin:0 auto 18px;min-height:300px;padding:32px 24px;border-radius:16px;border:1px solid var(--line);border-bottom:8px solid var(--wine2);background:var(--bg);color:var(--ink);font:inherit;text-align:center;cursor:pointer;transition:background .2s}
+.card b{font:700 clamp(20px,3vw,28px)/1.3 Archivo,sans-serif;letter-spacing:-.01em;max-width:34ch}
+.card .side{font-weight:700;font-size:14px;color:var(--wine2)}
+.card small{color:var(--muted);font-size:14px}
+.card.flip{background:var(--soft);border-bottom-color:var(--stamp)}
+.card.flip .side{color:var(--stamp)}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.duecard{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.duecard p{margin:0}
+.reveal{cursor:pointer;color:var(--stamp);font-weight:600;padding:6px 0}
+.steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.steps article{border:1px solid var(--line);border-radius:12px;padding:18px}
+.steps h3{font-size:20px;margin-bottom:8px}
+.steps ol{padding-left:20px;margin:8px 0}
+.model{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--soft)}
+.model .q{margin:0 0 14px}
+.paper{background-color:var(--bg);background-image:repeating-linear-gradient(transparent 0 27px,var(--line) 27px 28px);border:1px solid var(--line);border-radius:6px;padding:14px 20px 0;line-height:28px;margin-bottom:10px}
+.paper p{margin:0 0 28px}
+.lbl{display:inline-block;font-size:13px;font-weight:700;color:var(--stamp);border:1px solid var(--stamp);border-radius:4px;padding:0 6px;line-height:20px;margin-right:8px}
+
+ul.plain{padding-left:20px;margin:8px 0}
+@media(max-width:760px){.grid2,.timer,.steps{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.top{grid-template-columns:minmax(0,1fr)}.count{text-align:left}.ribbon{grid-template-columns:repeat(9,minmax(0,1fr))}.wk{height:52px}table{font-size:13px}th,td{padding:6px 4px}.rows .r{grid-template-columns:6.5em minmax(0,1fr) 3.6em}.subj summary{padding:14px}.row2{grid-template-columns:minmax(0,1fr)}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:10px;border:0;padding:3px 0;text-align:left}.stack td::before{content:attr(data-l);color:var(--muted);font-weight:600}.stack td[colspan]{display:block}.stack td[colspan]::before{content:none}.card{min-height:240px;padding:24px 16px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll(".stack td:not([data-l])")){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;const h=c.closest("table").rows[0].cells[i];c.dataset.l=h?h.textContent:""}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<header class="hero band">
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Oficial de Justiça TJSP</h1>
+        <p>Prova em 14/03/2027, à tarde, em Presidente Prudente · 27ª Circunscrição</p>
+      </div>
+      <div class="count"><b id="days">0</b><span>dias para a prova</span></div>
+    </div>
+    <div class="ribbon" id="ribbon" aria-label="Progresso das 16 semanas"></div>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+<nav><div class="wrap" id="tabs">
+  <a href="#semana">Semana</a><a href="#materias">Matérias</a><a href="#resumos">Resumos</a><a href="#cards">Flashcards</a><a href="#erros">Caderno de erros</a><a href="#questoes">Questões</a><a href="#simulados">Simulados</a><a href="#timer">Cronômetro</a><a href="#metodo">Como estudar</a><a href="#edital">Edital</a>
+</div></nav>
+<main class="band"><div class="wrap">
+
+<section id="v-semana">
+  <div class="sec-h"><h2 id="wk-title">Semana</h2><div class="btns" style="margin:0"><button class="btn" id="prev">‹ Anterior</button><button class="btn" id="next">Próxima ›</button></div></div>
+  <p class="lead" id="wk-sub"></p>
+  <ul class="tasks" id="wk-tasks"></ul>
+  <p class="note">Rotina sugerida: dia de trabalho com 1h20 de Específicos e 40 min de Português ou Gerais. Dia de folga com 2h de Específicos, 1h de questões e 1h de revisão do caderno de erros.</p>
+</section>
+
+<section id="v-materias">
+  <div class="sec-h"><h2>Matérias do edital</h2></div>
+  <p class="lead">Todos os artigos do Anexo VIII. Marque cada tópico quando tiver lido a lei seca e feito questões. Os links abrem o texto oficial e atualizado.</p>
+  <div id="subjects"></div>
+</section>
+
+<section id="v-questoes">
+  <div class="sec-h"><h2>Registro de questões</h2></div>
+  <p class="lead">Anote cada bateria de questões. A linha vertical marca a meta de 80% de acerto.</p>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Nova bateria</h3>
+      <form class="row" id="qform">
+        <div><label for="q-date">Data</label><input type="date" id="q-date" required></div>
+        <div><label for="q-subj">Matéria</label><select id="q-subj"></select></div>
+        <div><label for="q-tot">Feitas</label><input type="number" id="q-tot" min="1" max="500" inputmode="numeric" required></div>
+        <div><label for="q-ok">Acertos</label><input type="number" id="q-ok" min="0" max="500" inputmode="numeric" required></div>
+        <div><button class="btn pri" type="submit">Adicionar</button></div>
+      </form>
+    </div>
+    <div class="panel">
+      <h3>Acerto por matéria</h3>
+      <div class="rows" id="qbars"></div>
+    </div>
+  </div>
+  <h3 style="margin:28px 0 8px;font-size:20px">Histórico</h3>
+  <div class="scroll"><table><thead><tr><th>Data</th><th>Matéria</th><th class="n">Feitas</th><th class="n">Acertos</th><th class="n">%</th><th></th></tr></thead><tbody id="qlist"></tbody></table></div>
+</section>
+
+<section id="v-simulados">
+  <div class="sec-h"><h2>Simulados</h2></div>
+  <p class="lead">Faça a prova inteira em 5h, de preferência no domingo à tarde, como no dia real. O painel confere os mínimos do edital e a sua meta.</p>
+  <div class="panel">
+    <form class="row" id="sform">
+      <div><label for="s-date">Data</label><input type="date" id="s-date" required></div>
+      <div><label for="s-name">Prova usada</label><input id="s-name" placeholder="Ex.: VUNESP TJSP" maxlength="60"></div>
+      <div><label for="s-pt">Português (de 15)</label><input type="number" id="s-pt" min="0" max="15" required></div>
+      <div><label for="s-es">Específicos (de 40)</label><input type="number" id="s-es" min="0" max="40" required></div>
+      <div><label for="s-ge">Gerais (de 15)</label><input type="number" id="s-ge" min="0" max="15" required></div>
+      <div><label for="s-di">Discursiva (de 40)</label><input type="number" id="s-di" min="0" max="40" step="0.5" placeholder="opcional"></div>
+      <div><button class="btn pri" type="submit">Registrar</button></div>
+    </form>
+  </div>
+  <div class="scroll" style="margin-top:20px"><table><thead><tr><th>Data</th><th>Prova</th><th class="n">Port.</th><th class="n">Esp.</th><th class="n">Gerais</th><th class="n">Total</th><th>Habilita?</th><th>Meta 75%</th><th class="n">Disc.</th><th></th></tr></thead><tbody id="slist"></tbody></table></div>
+  <p class="note">Mínimos do edital: 8 de 15 em Português, 20 de 40 em Específicos, 35 de 70 no total e 24 de 40 na discursiva. A meta de 75% (53 de 70) é uma estimativa para ficar entre os 8 primeiros da circunscrição, não um dado oficial.</p>
+</section>
+
+<section id="v-timer">
+  <div class="timer">
+    <div>
+      <div class="clock" id="clock">50:00</div>
+      <p class="lead" id="tmode" style="margin-top:10px">Bloco de estudo</p>
+    </div>
+    <div class="panel">
+      <h3>Blocos de 50 + 10</h3>
+      <p class="note" style="margin:0">50 minutos de estudo sem celular e 10 de pausa. Quatro blocos equivalem a um dia de folga bem aproveitado.</p>
+      <div class="btns"><button class="btn pri" id="t-go">Iniciar</button><button class="btn" id="t-reset">Zerar</button><button class="btn" id="t-skip">Pular etapa</button></div>
+      <p style="margin:16px 0 0">Blocos concluídos hoje: <b id="t-count">0</b></p>
+    </div>
+  </div>
+</section>
+
+<section id="v-resumos">
+  <div class="sec-h"><h2>Resumos</h2></div>
+  <p class="lead">Os pontos que mais aparecem em prova, escritos de forma direta. Use para revisar, não para substituir a lei seca. Na dúvida, confira sempre o artigo no texto oficial.</p>
+  <h3 class="h3">Números que caem</h3>
+  <p class="note" style="margin-top:0">A VUNESP adora trocar um prazo pelo outro. Decore esta tabela.</p>
+  <div class="scroll"><table class="stack"><thead><tr><th>Situação</th><th>Regra</th><th>Onde</th></tr></thead><tbody id="prazos"></tbody></table></div>
+  <h3 class="h3" style="margin-top:32px">Por matéria</h3>
+  <div id="mat"></div>
+</section>
+
+<section id="v-cards">
+  <div class="sec-h"><h2>Flashcards</h2><div style="width:min(100%,280px)"><label for="fc-f">Matéria</label><select id="fc-f"></select></div></div>
+  <p class="lead">Leia a pergunta, responda de cabeça e só então vire o cartão. Os cartões que você erra aparecem com mais frequência.</p>
+  <button class="card" id="fc-card" type="button" aria-live="polite"><span class="side" id="fc-side">Pergunta</span><b id="fc-text"></b><small id="fc-hint">Toque para ver a resposta</small></button>
+  <div class="btns" style="justify-content:center"><button class="btn pri" id="fc-ok" type="button">Sabia</button><button class="btn" id="fc-ko" type="button">Não sabia</button><button class="btn" id="fc-skip" type="button">Pular</button><button class="btn" id="fc-err" type="button">Mandar para o caderno de erros</button></div>
+  <p class="note" id="fc-stat" style="text-align:center"></p>
+</section>
+
+<section id="v-erros">
+  <div class="sec-h"><h2>Caderno de erros</h2></div>
+  <p class="lead">Cada questão que você errar vira uma linha aqui. O painel agenda a revisão para 1, 7 e 30 dias depois. Depois da terceira revisão certa, o erro conta como dominado.</p>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Para revisar hoje <span class="tag" id="due-n">0</span></h3>
+      <div id="due"></div>
+    </div>
+    <div class="panel">
+      <h3>Novo erro</h3>
+      <form id="eform">
+        <div class="row2"><div><label for="e-m">Matéria</label><select id="e-m"></select></div><div><label for="e-a">Artigo ou assunto</label><input id="e-a" maxlength="60" placeholder="Ex.: CPC 252" required></div></div>
+        <label for="e-w" style="margin-top:10px">O que eu pensei (o erro)</label><input id="e-w" maxlength="200" required placeholder="Ex.: hora certa exige 3 procuras">
+        <label for="e-r" style="margin-top:10px">A regra certa, em uma frase</label><input id="e-r" maxlength="240" required placeholder="Ex.: 2 procuras + suspeita de ocultação">
+        <label for="e-k" style="margin-top:10px">Tipo do erro</label><select id="e-k"><option>Não sabia</option><option>Confundi com outra regra</option><option>Li a questão errado</option><option>Caí em pegadinha</option></select>
+        <div class="btns"><button class="btn pri" type="submit">Salvar no caderno</button></div>
+      </form>
+    </div>
+  </div>
+  <details class="subj" style="margin-top:24px"><summary><div><h3>Como preencher, com exemplos</h3><span class="meta">Três linhas de exemplo, que não ficam salvas</span></div></summary><div class="body">
+    <ul class="plain">
+      <li><b>Uma linha por erro.</b> Não copie a questão inteira. Escreva só o que você pensou e a regra certa.</li>
+      <li><b>A regra certa cabe em uma frase</b> e sempre leva o artigo. Se não cabe, você ainda não entendeu o ponto: volte à lei.</li>
+      <li><b>Classifique o erro.</b> Muitos erros de leitura pedem mais calma na prova, não mais estudo. Muitos de confusão pedem uma tabela comparando as duas regras.</li>
+      <li><b>Revise antes de estudar matéria nova:</b> 10 minutos por dia na lista de hoje.</li>
+    </ul>
+    <div class="scroll"><table class="stack"><thead><tr><th>Artigo</th><th>O que eu pensei</th><th>Regra certa</th><th>Tipo</th></tr></thead><tbody>
+      <tr><td>CPC 829</td><td>O executado tem 5 dias para pagar</td><td>CPC: 3 dias para pagar. São 5 dias só na execução fiscal (LEF, art. 8º)</td><td>Confundi com outra regra</td></tr>
+      <tr><td>CPP 798</td><td>O prazo começa a contar no dia da intimação</td><td>No CPP não se conta o dia do começo e conta-se o do vencimento. No CP (art. 10) conta-se o dia do começo</td><td>Caí em pegadinha</td></tr>
+      <tr><td>CF 5º, XI</td><td>Com ordem judicial, pode entrar à noite</td><td>Por ordem judicial, só durante o dia</td><td>Li a questão errado</td></tr>
+    </tbody></table></div>
+  </div></details>
+  <h3 class="h3" style="margin-top:28px">Todos os erros <span class="tag" id="err-n">0</span></h3>
+  <div class="scroll"><table class="stack"><thead><tr><th>Data</th><th>Matéria</th><th>Artigo</th><th>Regra certa</th><th>Tipo</th><th>Revisão</th><th></th></tr></thead><tbody id="elist"></tbody></table></div>
+</section>
+
+<section id="v-metodo">
+  <div class="sec-h"><h2>Como estudar</h2></div>
+  <p class="lead">Os quatro hábitos que fazem este plano funcionar. Estão em ordem de importância.</p>
+  <div class="steps">
+    <article><h3>1. Lei seca com marcação</h3>
+      <ol>
+        <li>Leia o trecho do dia inteiro, uma vez, sem marcar nada.</li>
+        <li>Na segunda leitura, marque com três cores: <b>prazos e números</b>; <b>exceções e proibições</b> (salvo, exceto, vedado, não); e <b>quem faz o quê</b> (juiz, escrivão, oficial).</li>
+        <li>Faça de 15 a 20 questões só daquele trecho e registre na aba Questões.</li>
+        <li>Toda questão errada vai para o caderno de erros.</li>
+      </ol>
+      <p class="note">A VUNESP costuma copiar o artigo trocando uma palavra: deverá por poderá, 3 por 5, dia por noite, nulo por anulável. A marcação treina o olho para essas palavras.</p>
+    </article>
+    <article><h3>2. Revisão espaçada</h3>
+      <ul class="plain">
+        <li>Revise cada assunto <b>1 dia, 7 dias e 30 dias</b> depois de estudá-lo. O caderno de erros já agenda isso sozinho.</li>
+        <li>Comece cada sessão com 10 minutos da lista "Para revisar hoje".</li>
+        <li>No domingo, faça uma rodada de flashcards da matéria da semana.</li>
+      </ul>
+    </article>
+    <article><h3>3. Simulado de verdade</h3>
+      <ul class="plain">
+        <li>5 horas cronometradas, no domingo à tarde, sem celular, com a folha de respostas impressa.</li>
+        <li>Uma ordem que costuma funcionar (sugestão minha): ler as 2 discursivas e anotar tópicos no rascunho (15 min), fazer Específicos, depois Português, depois Gerais, passar a discursiva a limpo e, no fim, o gabarito.</li>
+        <li>No dia seguinte, corrija e mande cada erro para o caderno, com o tipo do erro.</li>
+      </ul>
+    </article>
+    <article><h3>4. Fontes</h3>
+      <ul class="plain">
+        <li>Lei seca: os links da aba Matérias, sempre na versão atualizada.</li>
+        <li>NSCGJ: baixe a <a href="https://api.tjsp.jus.br/Handlers/Handler/FileFetch.ashx?codigo=203721" target="_blank" rel="noopener">versão anotada do Tomo I</a> (texto atualizado até 22/10/2026) e leia o Capítulo VII inteiro.</li>
+        <li>Provas anteriores: site da VUNESP. Provas de Escrevente do TJSP também servem, porque cobram muitos dos mesmos artigos.</li>
+        <li>Bancos de questões pagos (como QConcursos ou TEC Concursos): filtre por banca VUNESP e órgão TJSP.</li>
+      </ul>
+    </article>
+  </div>
+  <h3 class="h3" style="margin-top:36px">Discursiva: modelo de resposta</h3>
+  <p class="lead" style="margin-bottom:12px">Use sempre quatro partes: <b>resposta direta</b>, <b>fundamento legal</b>, <b>aplicação ao caso</b> e <b>conclusão</b>. A questão abaixo é um exemplo que eu criei, não de prova real.</p>
+  <div class="model">
+    <p class="q"><b>Questão.</b> Ao cumprir mandado de citação em ação de cobrança, o oficial de justiça procurou o réu duas vezes em sua residência, sem encontrá-lo. Vizinhos informaram que ele estava em casa e evitava atender. Como o oficial deve proceder? Fundamente.</p>
+    <div class="paper">
+      <p><span class="lbl">Resposta direta</span>O oficial deve realizar a citação com hora certa, nos termos dos arts. 252 a 254 do Código de Processo Civil.</p>
+      <p><span class="lbl">Fundamento</span>Estão presentes os dois requisitos do art. 252: o réu foi procurado por duas vezes em seu domicílio sem ser encontrado, e há suspeita de ocultação, indicada pelas informações dos vizinhos.</p>
+      <p><span class="lbl">Aplicação</span>Assim, o oficial deve intimar qualquer pessoa da família ou, na falta, qualquer vizinho de que voltará no dia útil imediato, em horário que designar, para efetuar a citação. No dia e hora marcados, se o réu não estiver presente, o oficial dará por feita a citação, deixará a contrafé com pessoa da família ou vizinho, declarando-lhe o nome, e lavrará certidão do ocorrido, com a advertência de que será nomeado curador especial em caso de revelia. Em seguida, o escrivão enviará ao réu, em até 10 dias da juntada do mandado, carta, telegrama ou correspondência eletrônica dando-lhe ciência de tudo.</p>
+      <p><span class="lbl">Conclusão</span>Portanto, a citação com hora certa é o meio adequado, pois garante a efetividade do ato diante da ocultação do réu.</p>
+    </div>
+    <ul class="plain note"><li>Começa respondendo à pergunta: o corretor encontra a resposta na primeira linha.</li><li>Cita os artigos e mostra que o caso preenche cada requisito.</li><li>Parágrafos curtos, sem abreviações e sem gírias. Nada que identifique você.</li></ul>
+  </div>
+</section>
+
+<section id="v-edital">
+  <div class="sec-h"><h2>Resumo do edital</h2></div>
+  <p class="lead">Edital de Abertura nº 01/2026, banca VUNESP.</p>
+  <div class="facts">
+    <div><b>70 objetivas + 2 discursivas</b>5 horas para fazer tudo. Todas as objetivas têm o mesmo peso.</div>
+    <div><b>15 · 40 · 15</b>Português, Conhecimentos Específicos e Conhecimentos Gerais (Atualidades 3, Matemática e Lógica 7, Informática 5).</div>
+    <div><b>Mínimos</b>50% em Português e em Específicos, total de pelo menos 35, e 24 de 40 na discursiva.</div>
+    <div><b>Corte da 27ª CJ</b>Só os 8 melhores da Lista Geral têm a discursiva corrigida. A circunscrição tem apenas cadastro de reserva.</div>
+    <div><b>Desempate</b>Primeiro quem tem 60 anos ou mais. Depois quem tem mais acertos em Português e em Direito.</div>
+    <div><b>Remuneração</b>R$ 9.856,95, mais auxílios, com jornada de 40 horas.</div>
+  </div>
+  <h3 style="margin:28px 0 8px;font-size:20px">Datas</h3>
+  <div class="scroll"><table><tbody>
+    <tr><td>Inscrições</td><td class="n">28/10 a 10/12/2026</td></tr>
+    <tr><td>Pagamento do boleto</td><td class="n">até 11/12/2026</td></tr>
+    <tr><td>Prova objetiva e discursiva</td><td class="n">14/03/2027, à tarde</td></tr>
+    <tr><td>Local da prova</td><td>Sai no DEJESP e no site da VUNESP. Também chega aviso por SMS.</td></tr>
+  </tbody></table></div>
+  <h3 style="margin:28px 0 8px;font-size:20px">Na discursiva, a resposta leva nota zero se</h3>
+  <ul class="plain"><li>tiver nome, rubrica, assinatura ou qualquer marca que identifique você</li><li>tiver corretivo ou marca-texto</li><li>ficar em branco, estiver ilegível ou for escrita fora do espaço</li><li>não responder ao que foi pedido</li></ul>
+  <p>Use só caneta preta ou azul-escura. Trecho rasurado conta como não escrito.</p>
+  <h3 style="margin:28px 0 8px;font-size:20px">Links úteis</h3>
+  <ul class="plain">
+    <li><a href="https://www.vunesp.com.br">VUNESP</a> · área do candidato e provas anteriores</li>
+    <li><a href="https://www.tjsp.jus.br/Corregedoria/Comunicados/NormasJudiciais">Normas Judiciais da Corregedoria (NSCGJ)</a></li>
+    <li><a href="https://www.tjsp.jus.br">Portal do TJSP</a></li>
+  </ul>
+  <details style="margin-top:28px"><summary class="btn" style="display:inline-flex;align-items:center">Backup dos dados</summary>
+    <p class="note">Seu progresso fica salvo só neste navegador e neste aparelho. Copie o código abaixo para guardar uma cópia, ou cole um código salvo para restaurar.</p>
+    <textarea id="bk" aria-label="Dados em JSON"></textarea>
+    <div class="btns"><button class="btn" id="bk-copy">Copiar</button><button class="btn" id="bk-load">Restaurar o que colei</button><span class="note" id="bk-msg"></span></div>
+  </details>
+</section>
+
+</div></main>
+
+<script>
+{
+const L={cpc:"https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm",cpp:"https://www.planalto.gov.br/ccivil_03/decreto-lei/del3689.htm",cp:"https://www.planalto.gov.br/ccivil_03/decreto-lei/del2848compilado.htm",cc:"https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",cf:"https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",lindb:"https://www.planalto.gov.br/ccivil_03/decreto-lei/del4657compilado.htm",l9099:"https://www.planalto.gov.br/ccivil_03/leis/l9099.htm",lia:"https://www.planalto.gov.br/ccivil_03/leis/l8429.htm",lef:"https://www.planalto.gov.br/ccivil_03/leis/l6830.htm",pcd:"https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm",e10261:"https://www.al.sp.gov.br/repositorio/legislacao/lei/1968/lei-10261-28.10.1968.html",l11608:"https://www.al.sp.gov.br/repositorio/legislacao/lei/2003/lei-11608-29.12.2003.html",r354:"https://atos.cnj.jus.br/atos/detalhar/3579",ns:"https://www.tjsp.jus.br/Corregedoria/Comunicados/NormasJudiciais"};
+const S=[
+{id:"cpc",name:"Processo Civil",p:"Prioridade 1",links:[["CPC",L.cpc],["Lei 9.099",L.l9099]],t:[
+["Normas fundamentais e jurisdição","1º a 11; 13 a 18; 21 a 27; 36"],["Competência","42 a 53; 64 a 66"],["Partes, capacidade, despesas e gratuidade","70 a 85; 98 a 102; 110 a 111"],["Intervenção de terceiros","125 a 135"],["Juiz e auxiliares da justiça (art. 154: deveres do oficial)","139 a 143; 149 a 155; 159 a 161"],["Ministério Público, Defensoria e forma dos atos","176 a 199"],["Pronunciamentos do juiz e prazos","203 a 235"],["Citação e cartas","236 a 259"],["Intimações","269 a 275"],["Prova testemunhal","447 a 449; 453 a 454"],["Coisa julgada e cumprimento de sentença","502; 528; 535 a 536; 538"],["Procedimentos especiais","554; 560 a 563; 626; 695; 751"],["Execução e penhora","782; 795; 806 a 807; 827 a 846"],["Avaliação","870 a 875"],["Recursos","994; 1.001; 1.003; 1.009; 1.010; 1.015; 1.022"],["Juizado Especial Cível (Lei 9.099)","8º; 9º; 18; 19"]]},
+{id:"ns",name:"Normas da Corregedoria (NSCGJ)",p:"Prioridade 1",links:[["Normas Judiciais",L.ns]],t:[
+["Capítulo VII: oficiais de justiça (o mais importante)","Tomo I, arts. 994 a 1.091-A"],["Disposições iniciais","Cap. I, arts. 1º a 4º"],["Cap. III","art. 33; arts. 47 e 49; arts. 105 a 110"],["Cap. IV","art. 196, XX; art. 282, § 1º; arts. 310 e 315; art. 410; arts. 436 e 436-A; arts. 439, 440 e 440-A"],["Cap. X e XI","arts. 1.137 a 1.139; arts. 1.245 e 1.247"]]},
+{id:"cpp",name:"Processo Penal",p:"Prioridade 2",links:[["CPP",L.cpp],["Lei 9.099",L.l9099]],t:[
+["Ação penal","24 a 42"],["Punibilidade e competência","61 a 74"],["Impedimento e suspeição de serventuários","112; 274"],["Medidas assecuratórias","125 a 131"],["Prova, interrogatório e testemunhas","156; 185; 202 a 204; 218 a 225"],["Busca e apreensão","240 a 250"],["Prisão","283 a 303"],["Citação","351 a 363"],["Intimação","370 a 372"],["Procedimento e Júri","396 a 396-A; 406; 436 a 446; 485 a 487"],["Crimes de responsabilidade de funcionários públicos","513 a 518"],["Nulidades e apelação","563 a 570; 593"],["Habeas corpus","647 a 654"],["Disposições finais e prazos","762 a 763; 792; 798 e 798-A"],["Juizado Especial Criminal (Lei 9.099)","1º; 2º; 60 a 62; 66 a 68"]]},
+{id:"cp",name:"Direito Penal",p:"Prioridade 2",links:[["Código Penal",L.cp]],t:[
+["Aplicação da lei penal","1º a 12"],["Ação penal e extinção da punibilidade","100 a 120"],["Homicídio e lesão corporal","121; 129"],["Violação de domicílio e de segredo","150; 154"],["Falsidades e fraudes em certames","293 a 305; 307; 308; 311-A"],["Crimes de funcionário contra a Administração","312 a 317; 319 a 327"],["Crimes de particular (resistência, desobediência, desacato)","328 a 333; 336 e 337"],["Crimes contra a Administração da Justiça","339 a 347; 357; 359"]]},
+{id:"cc",name:"Direito Civil",p:"Prioridade 3",links:[["Código Civil",L.cc],["LINDB",L.lindb]],t:[
+["Pessoas naturais","1º a 25"],["Pessoas jurídicas","40 a 45; 49 a 50; 53; 62"],["Domicílio e bens","70 a 103"],["Representação e defeitos do negócio jurídico","115 a 120; 138 a 159"],["Invalidade, prescrição e decadência","166 a 201"],["Prova","212 a 215"],["Mandato","653 a 666"],["Prepostos","1.169 a 1.173"],["Posse","1.196 a 1.203"],["Penhor","1.431 a 1.432; 1.442; 1.444 a 1.447; 1.451; 1.461; 1.467 a 1.472"],["Tutela, curatela e herança","1.728; 1.767; 1.775 a 1.778; 1.997"],["LINDB (Decreto-Lei 4.657/42)","inteira"]]},
+{id:"cf",name:"Direito Constitucional",p:"Prioridade 3",links:[["Constituição",L.cf]],t:[
+["Princípios fundamentais","1º a 4º"],["Direitos e deveres individuais","5º"],["Direitos sociais, nacionalidade e direitos políticos","6º a 16"],["Organização do Estado","18"],["Administração Pública e servidores","37 a 41"],["Poder Judiciário","92 a 99; 125"],["Ministério Público e Defensoria","127; 134"]]},
+{id:"adm",name:"Administrativo e Legislação Especial",p:"Prioridade 4",links:[["Lei 10.261/68",L.e10261],["Improbidade",L.lia],["LEF",L.lef],["Res. CNJ 354",L.r354],["Lei 11.608/03",L.l11608]],t:[
+["Estatuto dos Funcionários de SP (Lei 10.261/68)","1º; 3º; 4º; 11; 13; 14; 46; 47; 57; 78; 110; 120; 127; 176; 241 a 243; 251"],["Improbidade (Lei 8.429/92)","9º e 13"],["Execução Fiscal (Lei 6.830/80)","1º; 2º; 7º; 8º; 11; 37"],["Cumprimento digital de atos (Res. CNJ 354/2020)","1º; 8º a 10"],["Taxa judiciária de SP (Lei 11.608/03)","inteira"]]},
+{id:"pt",name:"Língua Portuguesa",p:"Eliminatória",links:[],t:[
+["Interpretação, inferências e ponto de vista do autor","itens 1 a 3"],["Coesão e relações entre ideias","item 4"],["Sentido das palavras: contexto, sinônimos, sentido figurado","itens 5 a 7"],["Classes de palavras","item 8"],["Concordância verbal e nominal","item 9"],["Regência verbal e nominal","item 10"],["Colocação pronominal","item 11"],["Crase","item 12"],["Pontuação","item 13"]]},
+{id:"ge",name:"Conhecimentos Gerais",p:"Classificatória",links:[["Estatuto da PcD",L.pcd]],t:[
+["Atualidades desde o 1º semestre de 2026","3 questões, junto com o Estatuto da PcD"],["Estatuto da Pessoa com Deficiência (Lei 13.146/15)","1º a 13; 34 a 38; 79 a 87"],["Matemática: operações, MMC/MDC, razão, proporção, porcentagem","3 questões"],["Matemática: regra de três, médias, juros simples, equações, sistemas","—"],["Matemática: tabelas, gráficos, medidas e geometria","—"],["Raciocínio lógico: estruturas, argumentação, diagramas, sequências","4 questões"],["Informática: Windows, Word, Excel","5 questões"],["Informática: Teams, OneDrive, e-mail, internet","—"]]}
+];
+const W=[
+["Diagnóstico e normas do CPC",["Fazer uma prova anterior da VUNESP sem estudar, como diagnóstico","CPC: normas fundamentais e jurisdição (1º a 36)","CPC: competência (42 a 53; 64 a 66)","Português: interpretação de texto","Montar o caderno de erros"]],
+["Partes e auxiliares da justiça",["CPC: partes, capacidade, despesas e gratuidade (70 a 111)","CPC: intervenção de terceiros (125 a 135)","CPC: juiz e auxiliares, com o art. 154 (139 a 161)","Português: classes de palavras","Pagar o boleto da inscrição até 11/12"]],
+["Atos, citação e intimação",["CPC: MP, Defensoria e forma dos atos (176 a 199)","CPC: pronunciamentos e prazos (203 a 235)","CPC: citação e cartas (236 a 259)","CPC: intimações (269 a 275)","Português: concordância"]],
+["Execução e penhora",["CPC: execução e penhora (782 a 846)","CPC: avaliação (870 a 875)","CPC: artigos soltos e recursos","Português: regência","Revisar no caderno de erros os erros de CPC"]],
+["Normas da Corregedoria",["NSCGJ Cap. VII: primeira leitura (994 a 1.040)","NSCGJ Cap. VII: segunda parte (1.041 a 1.091-A)","Questões sobre o trabalho do oficial","Português: crase","Semana de festas: cumprir pelo menos o Cap. VII"]],
+["Revisão da Fase 1",["NSCGJ: demais artigos do edital","Lei 9.099: Juizado Cível (8º, 9º, 18, 19)","Revisar tudo de CPC e NSCGJ","Português: colocação pronominal","Discursiva de treino: deveres do oficial (art. 154 do CPC)"]],
+["Processo Penal I",["CPP: ação penal e competência (24 a 74)","CPP: medidas assecuratórias e prova (125 a 225)","CPP: prisão (283 a 303) e busca (240 a 250)","Português: pontuação","Matemática: razão, proporção e porcentagem"]],
+["Processo Penal II",["CPP: citação e intimação (351 a 372)","CPP: procedimento, Júri, nulidades e habeas corpus","Lei 9.099: Juizado Criminal","Português: sinônimos e sentido das palavras","Matemática: regra de três, juros simples e médias"]],
+["Direito Penal I",["CP: aplicação da lei penal (1º a 12)","CP: ação penal e extinção da punibilidade (100 a 120)","CP: 121, 129, 150 e 154","Português: coesão","Raciocínio lógico: estruturas e argumentação"]],
+["Direito Penal II",["CP: falsidades (293 a 311-A)","CP: crimes contra a Administração (312 a 337)","CP: crimes contra a Administração da Justiça (339 a 359)","Raciocínio lógico: diagramas e sequências","Informática: Windows e Word"]],
+["Direito Civil",["CC: parte geral (1º a 103)","CC: negócio jurídico e prescrição (115 a 215)","CC: mandato, posse, penhor e curatela","LINDB","Informática: Excel, Teams, OneDrive e e-mail"]],
+["Constitucional e Administrativo",["CF: 1º a 18","CF: 37 a 41; 92 a 99; 125; 127; 134","Lei 10.261 e Improbidade","LEF, Res. CNJ 354 e Lei 11.608","Estatuto da PcD","Simulado 1 (5h, no domingo à tarde)"]],
+["Revisão de CPC e NSCGJ",["Revisar CPC","Revisar NSCGJ Cap. VII","Atualidades: principais notícias desde jan/2026","Simulado 2","2 discursivas cronometradas"]],
+["Revisão de Penal",["Revisar CPP","Revisar CP","Revisar Português","Simulado 3","2 discursivas cronometradas"]],
+["Revisão final do conteúdo",["Revisar CC e CF","Revisar Administrativo e Legislação Especial","Revisar Matemática, Lógica e Informática","Simulado 4","2 discursivas cronometradas"]],
+["Semana da prova",["Reler só o caderno de erros","Reler o art. 154 do CPC e o NSCGJ Cap. VII","Conferir o local da prova no site da VUNESP","Separar documento com foto e caneta preta","Dormir bem nas duas noites antes da prova"]]
+];
+const START=new Date(2026,10,24),EXAM=new Date(2027,2,14),DAY=864e5;
+const KEY="oj-tjsp-v1";
+let st={done:{},topics:{},q:[],s:[],pomo:{d:"",n:0},err:[],fc:{}};
+try{const raw=localStorage.getItem(KEY);if(raw)st=Object.assign(st,JSON.parse(raw))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=id=>document.getElementById(id);
+const fmt=d=>d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const wkStart=i=>new Date(START.getTime()+i*7*DAY);
+const wkEnd=i=>i===15?EXAM:new Date(START.getTime()+(i*7+6)*DAY);
+const curWeek=()=>Math.max(0,Math.min(15,Math.floor((today()-START)/(7*DAY))));
+let sel=curWeek();
+const wkPct=i=>{const n=W[i][1].length;let c=0;for(let j=0;j<n;j++)if(st.done[i+"-"+j])c++;return c/n};
+const allTopics=()=>S.reduce((a,s)=>a+s.t.length,0);
+const doneTopics=()=>Object.keys(st.topics).filter(k=>st.topics[k]).length;
+
+function renderHero(){
+  const d=Math.max(0,Math.round((EXAM-today())/DAY));$("days").textContent=d;
+  const now=curWeek();
+  $("ribbon").innerHTML=W.map((w,i)=>`<button class="wk${i===now?" now":""}${i===sel?" sel":""}" data-w="${i}" aria-label="Semana ${i+1}, ${Math.round(wkPct(i)*100)}% feita"><i style="height:${wkPct(i)*100}%"></i><em>${i+1}</em></button>`).join("")+`<div class="wk exam"><em>Prova<br>14/3</em></div>`;
+  const tq=st.q.reduce((a,r)=>a+r.t,0),ok=st.q.reduce((a,r)=>a+r.o,0);
+  $("stats").innerHTML=`<span><b>${doneTopics()}</b> de ${allTopics()} tópicos estudados</span><span><b>${tq}</b> questões feitas</span><span><b>${tq?Math.round(ok/tq*100)+"%":"—"}</b> de acerto geral</span><span><b>${st.s.length}</b> simulados</span><span><b>${st.err.filter(e=>e.st<3&&e.due<=iso(today())).length}</b> erros para revisar hoje</span>`;
+}
+function renderWeek(){
+  const w=W[sel];
+  $("wk-title").textContent=`Semana ${sel+1}: ${w[0]}`;
+  const ph=sel<6?"Fase 1, base":sel<12?"Fase 2, cobertura":"Fase 3, reta final";
+  $("wk-sub").textContent=`${fmt(wkStart(sel))} a ${fmt(wkEnd(sel))} · ${ph}${sel===curWeek()?" · semana atual":""}`;
+  $("wk-tasks").innerHTML=w[1].map((t,j)=>{const k=sel+"-"+j,on=!!st.done[k];return `<li><label class="chk${on?" done":""}"><input type="checkbox" data-k="${k}"${on?" checked":""}><span class="t"><span>${esc(t)}</span></span><span class="stampmark">CUMPRIDO</span></label></li>`}).join("");
+  $("prev").disabled=sel===0;$("next").disabled=sel===15;
+}
+function renderSubjects(){
+  const open=new Set([...document.querySelectorAll(".subj[open]")].map(d=>d.dataset.s));
+  $("subjects").innerHTML=S.map(s=>{const n=s.t.length,c=s.t.filter((_,j)=>st.topics[s.id+"-"+j]).length,p=Math.round(c/n*100);
+    return `<details class="subj" data-s="${s.id}"${open.has(s.id)?" open":""}><summary><div><h3>${esc(s.name)}</h3><span class="meta"><span class="tag">${esc(s.p)}</span>${c} de ${n} tópicos</span></div><span class="pct">${p}%</span><div class="bar"><i style="width:${p}%"></i></div></summary><div class="body">${s.links.length?`<div class="links">${s.links.map(l=>`<a href="${l[1]}" target="_blank" rel="noopener">${esc(l[0])}</a>`).join("")}</div>`:""}<ul class="tasks">${s.t.map((t,j)=>{const k=s.id+"-"+j,on=!!st.topics[k];return `<li><label class="chk${on?" done":""}"><input type="checkbox" data-t="${k}"${on?" checked":""}><span class="t"><span>${esc(t[0])}</span><small>${/^[\d.]+º?( a |;| e |$)/.test(t[1])?"Arts. ":""}${esc(t[1])}</small></span><span class="stampmark">CUMPRIDO</span></label></li>`}).join("")}</ul></div></details>`}).join("");
+}
+function renderQ(){
+  $("q-subj").innerHTML=S.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+  const name=id=>(S.find(s=>s.id===id)||{name:id}).name;
+  const rows=[...st.q].map((r,i)=>({...r,i})).sort((a,b)=>b.d.localeCompare(a.d));
+  $("qlist").innerHTML=rows.length?rows.map(r=>`<tr><td>${esc(r.d.split("-").reverse().join("/"))}</td><td>${esc(name(r.m))}</td><td class="n">${r.t}</td><td class="n">${r.o}</td><td class="n">${Math.round(r.o/r.t*100)}%</td><td><button class="x" data-qx="${r.i}" aria-label="Apagar">×</button></td></tr>`).join(""):`<tr><td colspan="6" class="empty">Nenhuma bateria registrada ainda. Comece com 15 a 20 questões do assunto da semana.</td></tr>`;
+  const agg=S.map(s=>{const rs=st.q.filter(r=>r.m===s.id),t=rs.reduce((a,r)=>a+r.t,0),o=rs.reduce((a,r)=>a+r.o,0);return {n:s.name,t,o}}).filter(a=>a.t);
+  $("qbars").innerHTML=agg.length?agg.map(a=>{const p=Math.round(a.o/a.t*100);return `<div class="r"><b>${esc(a.n)}</b><div class="track"><i style="width:${p}%"></i><span class="goal" style="left:80%"></span></div><span class="n ${p>=80?"ok":"no"}" style="text-align:right">${p}%</span></div>`}).join("")+`<p class="note">Abaixo de 80%: volte à lei seca antes de fazer mais questões.</p>`:`<p class="empty">As barras aparecem quando você registrar a primeira bateria.</p>`;
+}
+function renderS(){
+  const rows=[...st.s].map((r,i)=>({...r,i})).sort((a,b)=>b.d.localeCompare(a.d));
+  $("slist").innerHTML=rows.length?rows.map(r=>{const tot=r.pt+r.es+r.ge,hab=r.pt>=8&&r.es>=20&&tot>=35,meta=tot>=53;const di=r.di===null||r.di===undefined||r.di===""?"—":`<span class="${r.di>=24?"ok":"no"}">${r.di}</span>`;
+    return `<tr><td>${esc(r.d.split("-").reverse().join("/"))}</td><td>${esc(r.n||"—")}</td><td class="n">${r.pt}</td><td class="n">${r.es}</td><td class="n">${r.ge}</td><td class="n"><b>${tot}</b>/70</td><td class="${hab?"ok":"no"}">${hab?"Sim":"Não"}</td><td class="${meta?"ok":"no"}">${meta?"Atingida":"Faltam "+(53-tot)}</td><td class="n">${di}</td><td><button class="x" data-sx="${r.i}" aria-label="Apagar">×</button></td></tr>`}).join(""):`<tr><td colspan="10" class="empty">Nenhum simulado ainda. O primeiro está previsto para a semana 12.</td></tr>`;
+}
+function renderBk(){$("bk").value=JSON.stringify(st)}
+const PRAZOS=[
+["Executado pagar na execução (título extrajudicial)","3 dias","CPC 829"],
+["Executado pagar ou garantir na execução fiscal","5 dias","LEF 8º"],
+["Procurar o executado depois do arresto","2 vezes, em dias distintos, nos 10 dias seguintes","CPC 830"],
+["Citação com hora certa","2 procuras sem encontrar + suspeita de ocultação; volta no dia útil imediato","CPC 252"],
+["Carta ao réu depois da hora certa","até 10 dias da juntada do mandado","CPC 254"],
+["Edital de citação cível","20 a 60 dias","CPC 257"],
+["Edital de citação penal","15 dias","CPP 361"],
+["Falar sobre proposta de acordo certificada pelo oficial","5 dias; silêncio vale como recusa","CPC 154"],
+["Recursos no CPC","15 dias; embargos de declaração, 5 dias","CPC 1.003"],
+["Horário dos atos processuais","das 6h às 20h, em dias úteis","CPC 212"],
+["Laudo do avaliador nomeado","até 10 dias","CPC 870"],
+["Não citar parente do falecido","no dia do falecimento e nos 7 dias seguintes","CPC 244"],
+["Não citar noivos","nos 3 primeiros dias após o casamento","CPC 244"],
+["Queixa ou representação","6 meses, de quando se sabe quem é o autor","CPP 38"],
+["Contagem de prazos","CPC: só dias úteis · CPP: exclui o dia do começo · CP: inclui o dia do começo","CPC 219 · CPP 798 · CP 10"],
+["Validade do concurso","até 2 anos, prorrogável uma vez por igual período","CF 37"],
+["Estabilidade","3 anos de efetivo exercício","CF 41"],
+["Juizado Cível sem advogado","causas até 20 salários mínimos","Lei 9.099, 9º"],
+["Menor potencial ofensivo","pena máxima de até 2 anos","Lei 9.099, 61"],
+["Poupança impenhorável","até 40 salários mínimos","CPC 833"],
+["Vigência de lei nova","45 dias no país; 3 meses no exterior","LINDB 1º"]
+];
+const MAT=[
+{id:"cpc",name:"Processo Civil",g:[
+["O oficial no CPC (arts. 154 e 155)",["O oficial deve fazer pessoalmente citações, prisões, penhoras, arrestos e demais diligências, sempre que possível na presença de 2 testemunhas, certificando no mandado o lugar, o dia e a hora.","Também cabe a ele: executar as ordens do juiz, entregar o mandado em cartório depois de cumprido, ajudar o juiz a manter a ordem, fazer avaliações e certificar proposta de acordo feita por qualquer das partes.","Certificada a proposta, o juiz intima a outra parte para se manifestar em 5 dias. O silêncio vale como recusa.","O oficial responde civil e regressivamente quando, sem justo motivo, deixa de cumprir os atos no prazo ou pratica ato nulo com dolo ou culpa (155)."]],
+["Citação (arts. 238 a 259)",["Citação é o ato que convoca o réu, o executado ou o interessado para integrar a relação processual (238). O comparecimento espontâneo supre a falta ou a nulidade da citação (239).","Efeitos (240): induz litispendência, torna a coisa litigiosa e constitui o devedor em mora. A interrupção da prescrição retroage à data da propositura da ação.","Pode ser feita em qualquer lugar em que o réu esteja (243).","Não se cita, salvo para evitar perecimento de direito (244): quem está em ato de culto religioso; cônjuge, companheiro ou parente do morto no dia do falecimento e nos 7 dias seguintes; noivos nos 3 primeiros dias após o casamento; doente enquanto grave o estado.","A citação é preferencialmente eletrônica (246). Não sendo confirmada, faz-se pelo correio, por oficial, pelo escrivão em cartório ou por edital.","Não se cita pelo correio (247): ações de estado, incapaz, pessoa de direito público, local sem entrega domiciliar ou quando o autor justificar outra forma.","Como o oficial cita (251): lê o mandado e entrega a contrafé; certifica se o citando recebeu ou recusou; obtém a nota de ciente ou certifica que ela não foi aposta.","Hora certa (252 a 254): ver tabela de números. Em condomínio ou loteamento com controle de acesso, vale a intimação feita ao porteiro. No retorno, se o réu não estiver, a citação é dada por feita; a contrafé fica com familiar ou vizinho; a certidão adverte que haverá curador especial em caso de revelia.","Em comarcas contíguas ou da mesma região metropolitana, o oficial pode cumprir atos em qualquer delas (255).","Edital (256 a 258): citando desconhecido ou incerto, ou lugar ignorado, incerto ou inacessível. Quem alega esses requisitos com dolo paga multa de 5 salários mínimos."]],
+["Intimação (arts. 269 a 275)",["Intimação é o ato que dá ciência a alguém dos atos e termos do processo (269).","É feita por oficial quando não deu certo a intimação eletrônica ou pelo correio (275).","A certidão do oficial traz: o lugar e a descrição da pessoa intimada (com o documento, se possível), a declaração de entrega da contrafé e a nota de ciente ou a certidão de que ela não foi aposta. Cabe intimação com hora certa ou por edital."]],
+["Tempo dos atos e prazos",["Atos são praticados em dias úteis, das 6h às 20h (212). Citações, intimações e penhoras podem ocorrer nas férias forenses, nos feriados ou fora desse horário, sem autorização judicial, respeitado o art. 5º, XI, da CF.","Os prazos processuais contam só dias úteis (219).","Começo do prazo (231): citação por oficial, da juntada do mandado cumprido; pelo correio, da juntada do AR; por edital, do dia útil seguinte ao fim do prazo do edital; eletrônica, do 5º dia útil após a confirmação."]],
+["Execução, penhora e avaliação",["Executado é citado para pagar em 3 dias (829). Não pagando, o oficial penhora e avalia.","Se não encontrar o executado, o oficial arresta bens (830) e, nos 10 dias seguintes, procura o executado 2 vezes em dias distintos. Havendo suspeita de ocultação, cita com hora certa.","Impenhoráveis (833), entre outros: móveis que guarnecem a casa (salvo os de elevado valor), roupas e objetos pessoais, salários (salvo para pensão alimentícia e no que passar de 50 salários mínimos), ferramentas de trabalho, seguro de vida, pequena propriedade rural trabalhada pela família e poupança até 40 salários mínimos.","Ordem de preferência (835): dinheiro primeiro, depois títulos públicos, títulos com cotação, veículos, imóveis, móveis e assim por diante.","Não se penhora quando o valor dos bens seria todo consumido pelas custas (836). Nesse caso, o oficial descreve na certidão os bens que guarnecem a residência.","O auto de penhora traz dia, mês, ano e lugar, os nomes de exequente e executado, a descrição dos bens e a nomeação do depositário (838). A penhora se faz com apreensão e depósito (839).","Portas fechadas para impedir a penhora (846): o oficial comunica o juiz e pede ordem de arrombamento. Deferida, 2 oficiais cumprem o mandado, com 2 testemunhas e força policial se preciso, e lavram o auto em duas vias.","Avaliação (870 a 872): é feita pelo próprio oficial. Só se nomeia avaliador se for preciso conhecimento especializado. Dispensa-se a avaliação quando uma parte aceita a estimativa da outra, quando os bens têm cotação em bolsa ou quando são veículos com preço de mercado conhecido (871)."]],
+["Recursos e Juizado Cível",["Prazo de 15 dias para recorrer e para responder, exceto embargos de declaração, que têm 5 dias (1.003).","Apelação cabe contra sentença (1.009). Agravo de instrumento só nos casos do art. 1.015. Embargos de declaração servem para obscuridade, contradição, omissão ou erro material (1.022).","Lei 9.099: não podem ser partes o incapaz, o preso, as pessoas jurídicas de direito público, as empresas públicas da União, a massa falida e o insolvente civil (8º). Até 20 salários mínimos, o advogado é facultativo (9º).","Citação no Juizado (18): por correspondência com AR em mão própria ou, se preciso, por oficial, sem necessidade de mandado ou carta precatória. Não existe citação por edital no Juizado."]]]},
+{id:"ns",name:"Normas da Corregedoria (NSCGJ)",g:[
+["O que é possível adiantar",["O Capítulo VII do Tomo I, Dos Oficiais de Justiça, vai do art. 994 ao 1.091-A. Ele regula a rotina do cargo: recebimento e cumprimento de mandados, certidões, diligências e o ressarcimento das despesas de condução.","Art. 1.076 (redação do Provimento CG 36/2020): se o mandado tem endereços em setores diferentes, o oficial deve cumpri-lo no prazo, diligenciando no primeiro endereço e em todos os demais do seu setor.","Não consegui abrir o texto completo e atual do Capítulo VII. Abaixo estão só as regras que confirmei em fontes recentes. Para o resumo completo, baixe a versão anotada pelo link da aba Como estudar e me envie o PDF."]]]},
+{id:"cpp",name:"Processo Penal",g:[
+["Prisão (arts. 283 a 303)",["Só se prende em flagrante ou por ordem escrita e fundamentada do juiz (283). A prisão pode ser feita em qualquer dia e hora, respeitada a inviolabilidade do domicílio.","Força só quando indispensável, em caso de resistência ou tentativa de fuga (284).","Mandado em duas vias (286): o executor entrega uma ao preso, com dia, hora e lugar, e o preso assina recibo na outra. Se ele se recusar, 2 testemunhas assinam.","Em infração inafiançável, a falta de exibição do mandado não impede a prisão (287). O preso é apresentado imediatamente ao juiz que expediu o mandado, para a audiência de custódia.","Réu dentro de uma casa (293): o morador é intimado a entregá-lo. Se não obedecer: de dia, o executor chama 2 testemunhas e entra à força; de noite, guarda as saídas e, ao amanhecer, arromba as portas e prende.","Qualquer pessoa pode, e a polícia deve, prender quem estiver em flagrante (301).","Flagrante (302): está cometendo o crime; acabou de cometer; é perseguido logo após; ou é encontrado logo depois com instrumentos ou objetos que façam presumir que é o autor. No crime permanente, o flagrante dura enquanto durar a permanência (303)."]],
+["Busca e apreensão (arts. 240 a 250)",["Pode ser domiciliar ou pessoal (240). O mandado indica a casa e o morador (ou os sinais da pessoa), o motivo e os fins da diligência (243).","Busca pessoal dispensa mandado em caso de prisão ou de fundada suspeita (244).","Busca domiciliar se faz de dia, salvo se o morador consentir com a noite (245). Antes de entrar, os executores mostram e leem o mandado ao morador. Se houver desobediência, a porta é arrombada. Se o morador estiver ausente, intima-se um vizinho para assistir. No fim, lavra-se auto assinado por 2 testemunhas.","Busca em mulher é feita por outra mulher, se isso não atrasar nem prejudicar a diligência (249)."]],
+["Citação, intimação e testemunhas",["A citação inicial é por mandado quando o réu está no território do juiz (351).","Requisitos (357): o oficial lê o mandado e entrega a contrafé, com dia e hora; depois certifica a entrega e se o réu aceitou ou recusou.","O réu preso é citado pessoalmente (360). Se o réu não for encontrado, a citação é por edital de 15 dias (361).","Se o réu se oculta, o oficial certifica e cita com hora certa, como no CPC (362). Se o acusado não comparecer, recebe defensor dativo.","As intimações seguem as regras da citação, no que couber (370).","A testemunha intimada que falta sem justificativa pode ser conduzida pelo oficial, com auxílio da força pública (218). Também pode levar multa e responder por desobediência (219). O depoimento é oral (204)."]],
+["Prazos e Juizado Criminal",["Prazo decadencial de 6 meses para a queixa ou a representação, contado de quando a vítima sabe quem é o autor (38).","Prazos do CPP (798): são contínuos e peremptórios; não se conta o dia do começo e conta-se o do vencimento.","Lei 9.099: infração de menor potencial ofensivo é a contravenção ou o crime com pena máxima de até 2 anos (61).","A citação é pessoal, no próprio Juizado ou por mandado (66). Se o acusado não for encontrado, o processo vai para o juízo comum.","Intimação por correspondência com AR ou por oficial, sem precisar de mandado ou carta precatória (67)."]]]},
+{id:"cp",name:"Direito Penal",g:[
+["Parte geral",["Não há crime nem pena sem lei anterior (1º). A lei que deixa de considerar o fato crime retroage (2º).","Tempo do crime é o momento da ação ou omissão (4º, teoria da atividade). Lugar é onde ocorreu a ação ou o resultado (6º, ubiquidade).","O prazo penal inclui o dia do começo (10).","Prescrição pela pena máxima (109): acima de 12 anos, 20; acima de 8 até 12, 16; acima de 4 até 8, 12; acima de 2 até 4, 8; de 1 até 2, 4; menos de 1 ano, 3. Cai pela metade se o agente tinha menos de 21 anos no fato ou mais de 70 na sentença (115)."]],
+["Crimes contra a Administração Pública",["Funcionário público, para o CP (327), é quem exerce cargo, emprego ou função pública, mesmo transitoriamente ou sem remuneração.","Peculato (312): apropriar-se ou desviar bem de que tem a posse por causa do cargo. No peculato culposo, reparar o dano antes da sentença irrecorrível extingue a punibilidade; depois dela, reduz a pena pela metade.","Diferencie pelo verbo: concussão (316) é EXIGIR vantagem; corrupção passiva (317) é SOLICITAR, RECEBER ou ACEITAR promessa; corrupção ativa (333) é OFERECER ou PROMETER, feita pelo particular.","Prevaricação (319): retardar ou deixar de praticar ato de ofício para satisfazer interesse ou sentimento pessoal.","O que o oficial enfrenta na rua: resistência (329) é opor-se a ato legal com violência ou ameaça; desobediência (330) é descumprir ordem legal sem violência; desacato (331) é ofender o funcionário no exercício da função ou por causa dela.","Violação de domicílio (150): não é crime entrar de dia, com as formalidades legais, para prisão ou outra diligência, nem a qualquer hora quando um crime está sendo cometido ali ou está prestes a ser."]],
+["Contra a Administração da Justiça e falsidades",["Denunciação caluniosa (339), comunicação falsa de crime (340), autoacusação falsa (341), falso testemunho ou falsa perícia (342), coação no curso do processo (344), exercício arbitrário das próprias razões (345), fraude processual (347) e exploração de prestígio (357).","Falsidades (293 a 305) e fraude em certame de interesse público, como concurso (311-A). Leia os verbos de cada tipo."]]]},
+{id:"cc",name:"Direito Civil",g:[
+["Pessoas e domicílio",["A personalidade começa no nascimento com vida, mas a lei protege o nascituro desde a concepção (2º).","Absolutamente incapazes são só os menores de 16 anos (3º). Relativamente incapazes (4º): maiores de 16 e menores de 18, ébrios habituais, viciados em tóxicos, quem não pode exprimir a vontade e os pródigos.","A menoridade acaba aos 18 (5º). Emancipação: pelos pais, por instrumento público, a partir dos 16; por sentença; por casamento; por emprego público efetivo; por colação de grau em curso superior; por estabelecimento ou emprego com economia própria, a partir dos 16.","Domicílio é onde a pessoa reside com ânimo definitivo (70). Quem tem várias residências tem domicílio em qualquer delas (71).","Domicílio necessário (76): do incapaz, do servidor público (onde exerce permanentemente a função), do militar, do marítimo e do preso (onde cumpre a sentença)."]],
+["Bens e negócio jurídico",["Bens públicos (98 a 103): de uso comum, de uso especial e dominicais. Os dois primeiros não podem ser vendidos enquanto mantiverem a destinação. Nenhum bem público pode ser adquirido por usucapião.","Erro, dolo, coação, estado de perigo, lesão e fraude contra credores tornam o negócio anulável (171), com prazo de 4 anos para anular (178).","A simulação torna o negócio nulo (167). O negócio nulo não pode ser confirmado nem se convalida com o tempo (169).","A prescrição não corre entre cônjuges durante a sociedade conjugal, entre pais e filhos durante o poder familiar, nem contra absolutamente incapazes (197 e 198). Só pode ser interrompida uma vez (202). Prazo geral: 10 anos (205)."]],
+["Mandato, posse, penhor e curatela",["A procuração é o instrumento do mandato (653). Mandato em termos gerais só dá poderes de administração. Vender, hipotecar ou transigir exige poderes especiais e expressos (661).","Possuidor é quem exerce de fato algum dos poderes do proprietário (1.196). Detentor conserva a posse em nome de outro, por dependência (1.198). Posse justa é a que não é violenta, clandestina nem precária (1.200).","Penhor (1.431): o devedor entrega ao credor a posse de coisa móvel. No penhor rural, industrial, mercantil e de veículos, a coisa fica com o devedor.","Curatela (1.767 e 1.775): o cônjuge ou companheiro é curador de direito; na falta, o pai ou a mãe; depois, o descendente mais apto."]],
+["LINDB",["A lei entra em vigor 45 dias após publicada, salvo disposição em contrário. No exterior, em 3 meses (1º).","Ninguém deixa de cumprir a lei alegando que não a conhece (3º).","Na omissão da lei, o juiz usa analogia, costumes e princípios gerais do direito (4º).","A lei nova respeita o ato jurídico perfeito, o direito adquirido e a coisa julgada (6º)."]]]},
+{id:"cf",name:"Direito Constitucional",g:[
+["Princípios e direitos",["Fundamentos da República (1º): soberania, cidadania, dignidade da pessoa humana, valores sociais do trabalho e da livre iniciativa e pluralismo político. Macete: SO-CI-DI-VA-PLU.","Casa (5º, XI): ninguém entra sem consentimento do morador, salvo em flagrante delito, desastre, para prestar socorro ou, durante o dia, por determinação judicial. É a regra mais importante para o oficial.","Prisão (5º, LXI): só em flagrante ou por ordem escrita e fundamentada do juiz. Prisão civil por dívida, na prática, só a do devedor de alimentos: a do depositário infiel foi afastada pela Súmula Vinculante 25 do STF.","Cargos privativos de brasileiro nato (12, §3º): Presidente e Vice, presidentes da Câmara e do Senado, ministro do STF, carreira diplomática, oficial das Forças Armadas e ministro da Defesa.","Voto (14): obrigatório dos 18 aos 70 anos; facultativo para analfabetos, maiores de 70 e quem tem entre 16 e 18."]],
+["Administração Pública e Judiciário",["Princípios da Administração (37): legalidade, impessoalidade, moralidade, publicidade e eficiência (LIMPE).","Concurso vale por até 2 anos, prorrogável uma vez por igual período (37, III). Acumular cargos só nos casos do inciso XVI, com compatibilidade de horários.","Estabilidade após 3 anos de efetivo exercício, com avaliação especial de desempenho (41). O estável perde o cargo por sentença transitada em julgado, processo administrativo com ampla defesa ou avaliação periódica de desempenho.","Órgãos do Judiciário (92), CNJ incluído. Garantias dos juízes (95): vitaliciedade, inamovibilidade e irredutibilidade de subsídio. Autonomia administrativa e financeira (99).","Os Estados organizam sua própria Justiça (125). Princípios do MP (127): unidade, indivisibilidade e independência funcional. A Defensoria Pública está no art. 134."]]]},
+{id:"adm",name:"Administrativo e Legislação Especial",g:[
+["Estatuto de SP e Improbidade",["Lei 10.261/68: funcionário público é a pessoa legalmente investida em cargo público (3º). Cargo é o conjunto de atribuições e responsabilidades cometidas a um funcionário (4º).","As formas de provimento estão no art. 11 (nomeação, transferência, reintegração, acesso e outras). Os deveres e proibições estão nos arts. 241 a 243. As penas disciplinares estão no art. 251. Leia esses artigos inteiros, porque caem listas.","Improbidade, art. 9º: enriquecimento ilícito é obter vantagem patrimonial indevida por causa do cargo, e exige dolo. Art. 13: a posse e o exercício dependem da apresentação da declaração de imposto de renda."]],
+["Execução fiscal e atos digitais",["LEF (6.830/80): o executado é citado para pagar ou garantir a dívida em 5 dias (8º). Cuidado: no CPC são 3 dias. A citação é pelo correio com AR, salvo se a Fazenda pedir outra forma.","O despacho que recebe a inicial já ordena citação, penhora, arresto, registro e avaliação (7º). A ordem de penhora (11) começa pelo dinheiro.","Res. CNJ 354/2020: trata do cumprimento digital de atos processuais e ordens judiciais. Foi alterada várias vezes, inclusive em 2026, então leia os arts. 1º e 8º a 10 no texto atualizado do CNJ.","Lei 11.608/03: taxa judiciária de SP. Leia no texto atualizado da ALESP, porque percentuais e valores mudam."]]]},
+{id:"pt",name:"Língua Portuguesa",g:[
+["As regras que mais caem",["Crase obrigatória: a + a antes de palavra feminina que admite artigo (vou à escola) e em locuções femininas (às vezes, à noite). Proibida antes de palavra masculina, verbo, pronome pessoal e a no singular diante de plural (a pessoas). Facultativa antes de pronome possessivo feminino, nome de mulher e depois de até.","Colocação pronominal: palavras atrativas exigem próclise (não, nunca, que, quem, onde, advérbios, pronomes indefinidos e conjunções subordinativas). Não se começa frase com pronome oblíquo átono na norma culta. Futuro do presente e do pretérito sem palavra atrativa pedem mesóclise (far-se-á).","Concordância: haver no sentido de existir não vai para o plural (houve problemas). Fazer indicando tempo também não (faz dez anos). Verbo com sujeito depois dele ainda concorda com o sujeito (chegaram as cartas).","Regência: assistir no sentido de ver pede a (assistir ao jogo); visar no sentido de objetivar pede a; obedecer pede a; preferir é preferir uma coisa a outra, sem mais e sem do que; implicar no sentido de acarretar não pede preposição.","Pontuação: não se separa sujeito do verbo nem o verbo do complemento com vírgula. A vírgula é obrigatória no aposto explicativo, no vocativo e na oração adjetiva explicativa.","Interpretação: a resposta certa é a que o texto permite concluir, não a que é verdade no mundo. Desconfie de alternativas com sempre, nunca, apenas e todos."]]]},
+{id:"ge",name:"Conhecimentos Gerais",g:[
+["Matemática e Raciocínio Lógico",["Juros simples: J = C × i × t, com a taxa e o tempo na mesma unidade. Montante: M = C + J.","Porcentagem: aumento de 20% é multiplicar por 1,2; desconto de 20% é multiplicar por 0,8. Dois aumentos de 10% dão 21%, não 20%.","Regra de três inversa: mais trabalhadores, menos dias. Na composta, analise cada grandeza em relação à que se procura.","Média ponderada: some cada valor vezes o seu peso e divida pela soma dos pesos.","Lógica: a negação de p e q é não p ou não q; a de p ou q é não p e não q. A negação de se p, então q é p e não q. Se p, então q equivale a se não q, então não p.","Todo A é B se nega com algum A não é B. Nenhum A é B se nega com algum A é B."]],
+["Informática (Office em português)",["Atalhos do Word: Ctrl+N negrito, Ctrl+I itálico, Ctrl+S sublinhado, Ctrl+B salvar, Ctrl+O novo documento, Ctrl+A abrir, Ctrl+T selecionar tudo, Ctrl+L localizar, Ctrl+U substituir, Ctrl+P imprimir, Ctrl+Enter quebra de página.","Windows: Delete manda para a Lixeira; Shift+Delete exclui permanentemente. Arrastar na mesma unidade move; para outra unidade, copia. Win+E abre o Explorador de Arquivos; Win+D mostra a área de trabalho; Win+L bloqueia a tela.","Excel: toda fórmula começa com =. $A$1 é referência absoluta; A1 é relativa. Funções que mais caem: SOMA, MÉDIA, MÁXIMO, MÍNIMO, SE, CONT.SE, SOMASE e PROCV. Erros comuns: #DIV/0!, #REF!, #NOME?, #VALOR! e #N/D.","E-mail: quem está em Cc é visto por todos; quem está em Cco fica oculto para os demais destinatários.","Teams e OneDrive: no Teams há chats, reuniões com agendamento e gravação, e equipes com canais; arquivos de um canal ficam no SharePoint. OneDrive guarda arquivos na nuvem e permite compartilhar com link e definir se a pessoa pode editar ou só ver."]],
+["Estatuto da Pessoa com Deficiência",["Pessoa com deficiência tem impedimento de longo prazo, físico, mental, intelectual ou sensorial, que, em interação com barreiras, pode obstruir sua participação plena na sociedade (2º).","A deficiência não afeta a plena capacidade civil, inclusive para casar, ter união estável, exercer direitos reprodutivos, guarda e adoção (6º).","A curatela é medida extraordinária e afeta só atos de natureza patrimonial e negocial (84 e 85). Também existe a tomada de decisão apoiada."]],
+["Atualidades",["Cobra fatos políticos, econômicos, sociais e culturais divulgados desde o 1º semestre de 2026. São só 3 questões, junto com o Estatuto: leia um resumo semanal de notícias a partir da semana 13 e não gaste mais tempo que isso."]]]}
+];
+const EXTRA={
+cpc:{pre:[
+["Normas fundamentais e competência",["O processo começa por iniciativa da parte e segue por impulso oficial (2º).","Não se exclui da apreciação do Judiciário ameaça ou lesão a direito. O Estado promove, sempre que possível, a solução consensual dos conflitos (3º).","Princípios: duração razoável (4º), boa-fé (5º) e cooperação entre todos os sujeitos do processo (6º).","O juiz não pode decidir com base em fundamento sobre o qual as partes não puderam se manifestar, mesmo em matéria que pode decidir de ofício (10).","Julgamentos são públicos e as decisões devem ser fundamentadas, sob pena de nulidade (11).","Regra geral de competência: domicílio do réu, nas ações sobre direito pessoal ou direito real sobre móveis (46). Ação sobre direito real em imóvel: foro onde está a coisa (47).","Incompetência absoluta pode ser alegada a qualquer tempo e declarada de ofício. A relativa deve ser alegada em preliminar de contestação (64). Se o réu não a alega, a competência se prorroga (65)."]],
+["Partes, despesas e gratuidade",["Toda pessoa no exercício de seus direitos tem capacidade para estar em juízo (70). Os incapazes são representados ou assistidos (71).","Curador especial (72): para o incapaz sem representante ou com interesses em conflito, e para o réu preso revel ou o réu revel citado por edital ou com hora certa, enquanto não tiver advogado. A função é exercida pela Defensoria Pública.","O vencido paga honorários ao advogado do vencedor (85), em regra de 10% a 20% sobre a condenação, o proveito econômico ou o valor da causa.","Gratuidade da justiça (98): para quem não tem recursos para pagar custas, despesas e honorários. A alegação de insuficiência feita por pessoa natural presume-se verdadeira (99, §3º). Ter advogado particular não impede a gratuidade (99, §4º)."]],
+["Juiz, auxiliares, MP e Defensoria",["O juiz dirige o processo: assegura igualdade às partes, vela pela duração razoável e promove a autocomposição a qualquer tempo, entre outros deveres (139).","Auxiliares da justiça (149): escrivão ou chefe de secretaria, oficial de justiça, perito, depositário, administrador, intérprete, tradutor, mediador, conciliador, partidor, distribuidor, contabilista e regulador de avarias.","O escrivão redige ofícios, mandados e cartas, faz os atos de comunicação e guarda os autos (152).","O MP intervém como fiscal da ordem jurídica nas causas com interesse público ou social, interesse de incapaz e litígios coletivos pela posse de terra (178).","MP, Advocacia Pública e Defensoria têm prazo em dobro, contado da intimação pessoal (180, 183 e 186)."]]],
+post:[
+["Coisa julgada e cumprimento de sentença",["Coisa julgada material é a autoridade que torna imutável e indiscutível a decisão de mérito da qual não cabe mais recurso (502).","Alimentos (528): o executado é intimado pessoalmente para, em 3 dias, pagar, provar que pagou ou justificar por que não pode. Se não o fizer, o juiz manda protestar e pode decretar prisão de 1 a 3 meses, em regime fechado.","A Fazenda Pública é intimada para, em 30 dias, impugnar a execução (535)."]],
+["Procedimentos especiais",["As ações possessórias são fungíveis: o juiz pode conceder a proteção possessória adequada mesmo que o pedido tenha sido outro (554).","O possuidor tem direito a ser mantido na posse em caso de turbação e reintegrado em caso de esbulho (560).","Com a inicial bem instruída, o juiz expede, sem ouvir o réu, o mandado liminar de manutenção ou de reintegração de posse (562). Quem cumpre é o oficial.","Inventário (626): cônjuge ou companheiro, herdeiros e legatários são citados pelo correio, e publica-se edital.","Ações de família (695): o mandado de citação vai sem cópia da petição inicial, mas o réu pode examiná-la a qualquer tempo.","Herança jacente (751): o oficial, com o escrivão e o curador, arrola os bens e os descreve em auto circunstanciado."]],
+["Execução: regras gerais",["O juiz determina os atos executivos e o oficial os cumpre (782). O oficial pode cumpri-los também em comarcas contíguas, de fácil comunicação, ou da mesma região metropolitana.","Os bens dos sócios não respondem pelas dívidas da sociedade, salvo nos casos previstos em lei (795).","Entrega de coisa certa (806): o executado é citado para entregar a coisa em 15 dias. No mandado já consta a ordem de imissão na posse (imóvel) ou de busca e apreensão (móvel), cumprida de imediato se ele não entregar no prazo."]]]},
+ns:{post:[
+["Regras do Capítulo VII confirmadas em fontes recentes",["Atenção: estas regras vêm de provimentos e documentos de 2020 a 2025. Confira cada uma no texto atualizado até 22/10/2026 antes de decorar.","Mandados classificados como urgentes por determinação judicial devem ser cumpridos em 5 dias, salvo prazo menor fixado pelo juiz ou por comunicado da Corregedoria (art. 1.000, §2º, e art. 1.014, §1º).","Agrupamento de mandados (art. 1.020): mandados gratuitos para endereços contíguos ou lindeiros; mandados pagos para endereços contíguos na mesma área, quando são do mesmo processo, de processos conexos ou entre as mesmas partes; e mandados para o mesmo estabelecimento prisional ou de internação.","Cumprimento remoto em unidades prisionais ou de internação (art. 1.029): o oficial faz o agendamento em até 48 horas depois de receber o mandado.","Ato cumprido de forma virtual: o oficial deve certificar o meio utilizado (art. 1.030, §2º).","Mandado com endereços em setores diferentes (art. 1.076): o oficial cumpre no prazo, diligenciando no primeiro endereço e em todos os do seu setor."]]]},
+cpp:{pre:[
+["Ação penal e competência",["A ação penal pública é promovida por denúncia do MP. Pode depender de representação da vítima ou de requisição do Ministro da Justiça (24).","A representação não pode mais ser retirada depois de oferecida a denúncia (25).","Na ação privada, a queixa é da vítima ou de seu representante (30). Se a vítima morre ou é declarada ausente, o direito passa ao cônjuge, ascendente, descendente ou irmão (31).","O MP não pode desistir da ação penal (42).","Em regra, a competência é do lugar em que o crime se consumou (70)."]],
+["Medidas assecuratórias e prova",["Cabe sequestro dos imóveis adquiridos com o dinheiro do crime, mesmo que já transferidos a terceiros (125). Bastam indícios veementes da origem ilícita (126).","Quem alega um fato tem o ônus de prová-lo (156).","O acusado é interrogado na presença de seu defensor (185).","Recebida a denúncia, o juiz manda citar o acusado para responder por escrito em 10 dias (396). Na resposta, ele pode alegar tudo o que interesse à defesa, juntar documentos e arrolar testemunhas (396-A)."]]],
+post:[
+["Júri, crimes de funcionário e nulidades",["O serviço do júri é obrigatório e abrange cidadãos maiores de 18 anos de notória idoneidade (436). Ninguém pode ser excluído por cor, etnia, raça, credo, sexo, profissão, classe social, origem ou grau de instrução.","Quem efetivamente serve como jurado ganha presunção de idoneidade moral (439) e preferência, em igualdade de condições, em concursos públicos e licitações (440). Por isso jurado é critério de desempate neste concurso.","Crimes afiançáveis de funcionário público: antes de receber a denúncia, o juiz notifica o acusado para responder por escrito em 15 dias (514).","Nenhum ato é declarado nulo se não causar prejuízo à acusação ou à defesa (563).","A falta ou a nulidade da citação ou da intimação fica sanada se o interessado comparecer antes do ato, ainda que só para alegá-la (570)."]],
+["Habeas corpus",["Cabe sempre que alguém sofrer ou estiver ameaçado de sofrer violência ou coação ilegal na sua liberdade de ir e vir, salvo em punição disciplinar (647).","Qualquer pessoa pode impetrar, em favor próprio ou de outra pessoa, assim como o MP (654)."]]]},
+cp:{pre:[
+["Ação penal, extinção e crimes contra a pessoa",["A ação penal é pública, salvo quando a lei a declara privativa do ofendido (100).","Extinguem a punibilidade (107): morte do agente; anistia, graça ou indulto; lei que deixa de considerar o fato crime; prescrição, decadência ou perempção; renúncia ou perdão aceito, na ação privada; retratação, quando a lei admite; e perdão judicial, nos casos previstos.","Homicídio simples (121): reclusão de 6 a 20 anos. Lesão corporal leve (129): detenção de 3 meses a 1 ano.","Violação do segredo profissional (154): revelar, sem justa causa, segredo conhecido por causa de função, ministério, ofício ou profissão, se isso puder causar dano a alguém."]]]},
+cc:{post:[
+["Ausência, pessoas jurídicas e associações",["Se a pessoa desaparece sem notícias e sem deixar representante, o juiz declara a ausência e nomeia curador (22).","Pessoas jurídicas de direito público interno (41): União, Estados, DF, Territórios, Municípios, autarquias (inclusive associações públicas) e demais entidades públicas criadas por lei.","Desconsideração da personalidade jurídica (50): em caso de abuso, por desvio de finalidade ou confusão patrimonial, o juiz pode alcançar os bens dos administradores ou sócios beneficiados.","Associação é a união de pessoas organizadas para fins não econômicos (53)."]],
+["Bens, representação e prova",["Imóveis: o solo e tudo o que se incorpora a ele, natural ou artificialmente (79). Móveis: os que se movem sozinhos ou podem ser removidos sem alteração da substância (82).","Fungíveis são os móveis que podem ser trocados por outros da mesma espécie, qualidade e quantidade (85).","Benfeitorias (96): voluptuárias são de mero deleite; úteis aumentam ou facilitam o uso; necessárias conservam o bem ou evitam que se deteriore.","Os poderes de representação vêm da lei ou do interessado (115). É anulável o negócio que o representante faz consigo mesmo, salvo se a lei ou o representado permitir (117).","O fato jurídico se prova por confissão, documento, testemunha, presunção e perícia (212). A escritura pública faz prova plena (215)."]]]},
+cf:{pre:[
+["Artigo 5º: o que mais cai",["Todos são iguais perante a lei. Homens e mulheres são iguais em direitos e obrigações (caput e I).","Ninguém é obrigado a fazer ou deixar de fazer alguma coisa senão em virtude de lei (II).","É inviolável o sigilo da correspondência e das comunicações. As telefônicas só podem ser interceptadas por ordem judicial, para investigação criminal ou instrução processual penal (XII).","Ninguém é privado da liberdade ou de seus bens sem o devido processo legal (LIV). Contraditório e ampla defesa (LV). Provas ilícitas são inadmissíveis (LVI). Ninguém é considerado culpado até o trânsito em julgado da sentença penal condenatória (LVII).","Remédios: habeas corpus protege a liberdade de locomoção; mandado de segurança, direito líquido e certo não amparado por HC ou habeas data; habeas data, informações sobre a própria pessoa; mandado de injunção, a falta de norma regulamentadora; ação popular, o patrimônio público e a moralidade."]],
+["Direitos sociais e organização do Estado",["Direitos sociais (6º): educação, saúde, alimentação, trabalho, moradia, transporte, lazer, segurança, previdência social, proteção à maternidade e à infância e assistência aos desamparados.","A organização político-administrativa compreende União, Estados, Distrito Federal e Municípios, todos autônomos (18).","A remuneração dos servidores só é fixada ou alterada por lei específica (37, X). O teto geral é o subsídio dos ministros do STF (37, XI)."]]]},
+adm:{post:[
+["Lei 10.261/68 artigo por artigo",["Provimento (11): nomeação, transferência, reintegração, acesso, reversão, aproveitamento e readmissão.","Nomeação (13): vitalícia, nos casos da CF; em comissão, quando a lei determinar; ou efetiva, quando o cargo for dessa natureza.","Cargo efetivo exige concurso de provas ou de provas e títulos (14). As provas valem de 0 a 100 pontos e os títulos, no máximo, 50.","Posse é o ato que investe o cidadão no cargo (46). Requisitos (47): ser brasileiro, ter 18 anos, estar em dia com o serviço militar e com os direitos políticos, ter boa conduta, boa saúde, aptidão para o cargo e atender às condições especiais do cargo.","Exercício é o ato pelo qual o funcionário assume as atribuições do cargo (57).","Contam como efetivo exercício (78), entre outros: férias; casamento, até 8 dias; falecimento de cônjuge, filhos, pais ou irmãos, até 8 dias; de avós, netos, sogros, padrasto ou madrasta, até 2 dias; licença-prêmio; licença à gestante e licença-paternidade.","Perda de vencimento (110): perde o dia inteiro quem falta; perde 1/3 do dia quem chega até uma hora depois do início do expediente ou sai na última hora.","Ponto é o registro diário de entrada e saída (120). É proibido dispensar o registro, salvo nos casos previstos em lei.","Adicional por tempo de serviço (127): 5% sobre o vencimento a cada 5 anos de serviço, contínuos ou não.","Férias (176): 30 dias por ano. Acumulação só por necessidade do serviço, até 2 anos. Com mais de 10 faltas no ano anterior, as férias caem para 20 dias.","Deveres (241), entre eles: ser assíduo e pontual; cumprir ordens superiores, representando contra as manifestamente ilegais; guardar sigilo; levar irregularidades ao conhecimento da autoridade; tratar as pessoas com urbanidade; residir no local do cargo; zelar pelo material do Estado; manter-se atualizado.","Proibições (242 e 243), entre elas: retirar documentos da repartição sem autorização; tratar de interesses particulares na repartição; usar material do serviço para fins particulares; praticar usura; atuar como procurador de partes perante repartições, salvo para cônjuge ou parente até o 2º grau; valer-se do cargo para obter vantagem. O texto ainda proíbe greve e sindicalização, mas a CF garante esses direitos ao servidor. Numa questão de lei seca, porém, vale o texto.","Penas disciplinares (251): repreensão, suspensão, multa, demissão, demissão a bem do serviço público e cassação de aposentadoria ou disponibilidade."]]]},
+pt:{post:[
+["Conjunções e conectivos",["Oposição (adversativas): mas, porém, contudo, todavia, entretanto, no entanto.","Conclusão: logo, portanto, por isso, pois (depois do verbo). Explicação: pois (antes do verbo), porque, que.","Concessão: embora, ainda que, mesmo que, conquanto, apesar de que. Condição: se, caso, desde que, contanto que.","Causa: porque, visto que, já que, uma vez que, como (no início da frase). Finalidade: para que, a fim de que. Tempo: quando, enquanto, assim que, logo que.","A VUNESP costuma pedir para trocar um conectivo por outro sem mudar o sentido. Troque só por outro da mesma lista."]],
+["Palavras que se confundem",["Mandado é ordem judicial. Mandato é procuração ou período de um cargo eletivo. Para o oficial de justiça, é mandado.","Ratificar é confirmar; retificar é corrigir. Eminente é ilustre; iminente é prestes a acontecer.","Deferir é atender o pedido; diferir é adiar. Infringir é desrespeitar uma regra; infligir é aplicar uma pena.","Descrição é o ato de descrever; discrição é ser discreto. Cessão é ceder; sessão é reunião; seção é divisão.","Tráfego é trânsito; tráfico é comércio ilegal. Flagrante é evidente; fragrante é perfumado. Vultoso é de grande vulto; vultuoso é inchado."]],
+["Mais crase e pronomes",["Crase em locuções: à medida que, à proporção que, às pressas, à vista. Sem crase: a prazo, a partir de, a pé, a cavalo.","Àquele, àquela e àquilo: a preposição a se une ao pronome (refiro-me àquele caso).","Cujo indica posse, concorda com a coisa possuída e nunca vem seguido de artigo (o réu cujo advogado faltou, e não cujo o advogado).","Onde só para lugar físico; para tempo ou situação, use em que."]]]},
+ge:{post:[
+["Mais Matemática",["MMC resolve problemas de coincidência (quando dois eventos voltarão a acontecer juntos). MDC resolve divisão no maior tamanho igual possível.","Equação do 2º grau: Δ = b² − 4ac e x = (−b ± √Δ) / 2a. Se Δ é negativo, não há raiz real.","Áreas: retângulo, base × altura; triângulo, base × altura ÷ 2; círculo, π × r². Comprimento da circunferência: 2 × π × r. Volume do paralelepípedo: comprimento × largura × altura.","Pitágoras: no triângulo retângulo, a hipotenusa ao quadrado é igual à soma dos quadrados dos catetos. Triângulos 3, 4, 5 e 5, 12, 13 aparecem muito.","A soma dos ângulos internos de um triângulo é 180°.","Medidas: 1 m³ = 1.000 litros; 1 litro = 1.000 mL; 1 km = 1.000 m; 1 hectare = 10.000 m²."]],
+["Mais Raciocínio Lógico",["Sequências: veja primeiro a diferença entre termos seguidos; depois, se há duas sequências alternadas misturadas; por fim, se cada termo multiplica o anterior.","Problemas de associação (quem mora onde, quem tem qual profissão): monte uma tabela e marque X no que é impossível. O que sobra é a resposta.","Diagramas: algum A é B significa que os conjuntos têm interseção; nenhum A é B, que são separados; todo A é B, que A está dentro de B.","Quantificadores: se a premissa diz algum, não conclua todo. Se diz todo A é B, não conclua todo B é A."]],
+["Mais Informática",["URL: protocolo://domínio/caminho. HTTPS indica conexão criptografada, não que o site é confiável.","Navegador: Ctrl+T abre nova aba; Ctrl+Shift+T reabre a aba fechada; Ctrl+F localiza na página; Ctrl+D adiciona aos favoritos; Ctrl+H mostra o histórico. A navegação anônima não salva histórico no computador, mas não esconde a navegação do provedor nem do site.","Word: a quebra de página começa uma nova página; a quebra de seção permite formatação diferente (orientação, colunas, cabeçalho) em partes do documento. O sumário é gerado a partir dos estilos de título. Legendas e índice ficam na guia Referências.","Excel em português: os argumentos são separados por ponto e vírgula, como em =SE(A1>=7;\"Aprovado\";\"Reprovado\"). Dois-pontos indicam intervalo (A1:A10). A alça de preenchimento copia fórmulas ajustando as referências relativas.","Ordem das operações no Excel: primeiro ^, depois * e /, depois + e −. Use parênteses para mudar a ordem."]]]}
+};
+MAT.forEach(m=>{const x=EXTRA[m.id];if(!x)return;m.g=[...(x.pre||[]),...m.g,...(x.post||[])]});
+const FC=[
+["cpc","Quais diligências o art. 154 do CPC manda o oficial fazer pessoalmente?","Citações, prisões, penhoras, arrestos e demais diligências do ofício, sempre que possível na presença de 2 testemunhas, certificando lugar, dia e hora."],
+["cpc","Oficial certificou proposta de acordo de uma das partes. E agora?","O juiz intima a outra parte para se manifestar em 5 dias. O silêncio vale como recusa (CPC 154, parágrafo único)."],
+["cpc","Requisitos da citação com hora certa no CPC?","2 procuras no domicílio sem encontrar o citando + suspeita de ocultação (art. 252)."],
+["cpc","Na hora certa, quem o oficial intima de que voltará?","Qualquer pessoa da família ou, na falta, qualquer vizinho. Em condomínio com controle de acesso, o porteiro."],
+["cpc","Depois da citação com hora certa, o que o escrivão faz e em quanto tempo?","Envia carta, telegrama ou e-mail ao réu dando ciência, em até 10 dias da juntada do mandado (art. 254)."],
+["cpc","Até quantos dias após o falecimento não se cita parente do morto?","No dia do falecimento e nos 7 dias seguintes (art. 244)."],
+["cpc","Em quais casos não cabe citação pelo correio?","Ações de estado, réu incapaz, pessoa de direito público, local sem entrega domiciliar e quando o autor justificar outra forma (art. 247)."],
+["cpc","Prazo do edital de citação no CPC?","Entre 20 e 60 dias (art. 257)."],
+["cpc","Horário dos atos processuais no CPC?","Dias úteis, das 6h às 20h. Citação, intimação e penhora podem ocorrer fora disso, sem autorização judicial, respeitando o art. 5º, XI, da CF."],
+["cpc","Quando começa o prazo da citação feita por oficial?","Da data da juntada aos autos do mandado cumprido (art. 231)."],
+["cpc","Prazo para o executado pagar no CPC (título extrajudicial)?","3 dias (art. 829)."],
+["cpc","O oficial não encontrou o executado. O que faz?","Arresta bens e, nos 10 dias seguintes, procura o executado 2 vezes em dias distintos. Se houver suspeita de ocultação, cita com hora certa (art. 830)."],
+["cpc","Executado fechou as portas para impedir a penhora. Procedimento?","O oficial pede ordem de arrombamento ao juiz. Deferida, 2 oficiais cumprem com 2 testemunhas, força policial se preciso, e lavram auto em duas vias (art. 846)."],
+["cpc","Quem faz a avaliação dos bens penhorados?","O próprio oficial. Avaliador só se for preciso conhecimento especializado, com laudo em até 10 dias (art. 870)."],
+["cpc","Até quanto a poupança é impenhorável?","Até 40 salários mínimos (art. 833, X)."],
+["cpc","Prazo dos embargos de declaração e dos demais recursos?","Embargos de declaração: 5 dias. Demais recursos: 15 dias."],
+["cpc","Existe citação por edital no Juizado Especial Cível?","Não (Lei 9.099, art. 18, §2º)."],
+["cpp","Quando a prisão pode ser feita?","Em qualquer dia e a qualquer hora, respeitada a inviolabilidade do domicílio (CPP 283, §2º)."],
+["cpp","Réu se escondeu numa casa à noite e o morador não o entrega. O que o executor faz?","Guarda todas as saídas, deixa a casa incomunicável e, ao amanhecer, arromba as portas e prende (CPP 293)."],
+["cpp","Infração inafiançável e o executor está sem o mandado. Pode prender?","Pode. O preso é apresentado imediatamente ao juiz que expediu o mandado, para audiência de custódia (CPP 287)."],
+["cpp","Busca domiciliar pode ser feita à noite?","Só se o morador consentir. A regra é de dia (CPP 245)."],
+["cpp","Quem faz busca pessoal em mulher?","Outra mulher, se isso não atrasar nem prejudicar a diligência (CPP 249)."],
+["cpp","Réu não encontrado no processo penal: prazo do edital?","15 dias (CPP 361)."],
+["cpp","Réu se oculta para não ser citado no processo penal. E agora?","O oficial certifica e cita com hora certa (CPP 362). Se o réu não comparecer, recebe defensor dativo."],
+["cpp","Como se conta prazo no CPP?","Não se conta o dia do começo e conta-se o do vencimento (CPP 798, §1º)."],
+["cpp","O que é infração de menor potencial ofensivo?","Contravenção ou crime com pena máxima de até 2 anos (Lei 9.099, art. 61)."],
+["cp","Concussão, corrupção passiva e corrupção ativa: qual é o verbo de cada uma?","Concussão: exigir. Corrupção passiva: solicitar, receber ou aceitar promessa. Corrupção ativa: oferecer ou prometer."],
+["cp","Diferença entre resistência e desobediência?","Resistência tem violência ou ameaça contra quem executa ato legal (329). Desobediência é só descumprir a ordem legal (330)."],
+["cp","O que é desacato?","Ofender o funcionário público no exercício da função ou em razão dela (CP 331)."],
+["cp","Reparar o dano no peculato culposo tem qual efeito?","Antes da sentença irrecorrível, extingue a punibilidade. Depois, reduz a pena pela metade (CP 312, §3º)."],
+["cp","Como se conta prazo no Código Penal?","O dia do começo entra na contagem (CP 10)."],
+["cp","Prescrição de crime com pena máxima de 4 anos?","8 anos (CP 109, IV: acima de 2 até 4 anos)."],
+["cc","Quem é absolutamente incapaz hoje?","Só os menores de 16 anos (CC 3º)."],
+["cc","Qual é o domicílio do servidor público?","O lugar onde exerce permanentemente suas funções (CC 76)."],
+["cc","Prazo para anular negócio por erro, dolo ou coação?","4 anos, prazo decadencial (CC 178)."],
+["cc","Quantas vezes a prescrição pode ser interrompida?","Uma única vez (CC 202)."],
+["cc","Prazo de vigência de lei nova sem data definida?","45 dias no país; 3 meses no exterior (LINDB 1º)."],
+["cf","Com ordem judicial, o oficial pode entrar na casa à noite?","Não. Por determinação judicial, só durante o dia (CF 5º, XI)."],
+["cf","Validade do concurso público?","Até 2 anos, prorrogável uma vez por igual período (CF 37, III)."],
+["cf","Em quanto tempo o servidor fica estável?","3 anos de efetivo exercício, com avaliação especial de desempenho (CF 41)."],
+["cf","Fundamentos da República (art. 1º)?","Soberania, cidadania, dignidade da pessoa humana, valores sociais do trabalho e da livre iniciativa e pluralismo político."],
+["adm","Prazo para pagar ou garantir na execução fiscal?","5 dias (LEF 8º)."],
+["adm","Conceito de funcionário público na Lei 10.261/68?","Pessoa legalmente investida em cargo público (art. 3º)."],
+["pt","Há crase em: Entreguei o mandado a ela?","Não. Não há crase antes de pronome pessoal."],
+["pt","Houveram problemas ou Houve problemas?","Houve problemas. Haver no sentido de existir não vai para o plural."],
+["ge","Negação de: Se chove, então a rua molha.","Chove e a rua não molha."],
+["ge","No Word em português, qual atalho deixa o texto em negrito?","Ctrl+N."]
+];
+const ERR_STEPS=[1,7,30];
+const addDays=(s,n)=>{const d=new Date(s+"T00:00:00");d.setDate(d.getDate()+n);return iso(d)};
+const sname=id=>(S.find(s=>s.id===id)||{name:id}).name;
+function renderMat(){
+  $("prazos").innerHTML=PRAZOS.map(p=>`<tr><td>${esc(p[0])}</td><td><b>${esc(p[1])}</b></td><td class="nw">${esc(p[2])}</td></tr>`).join("");
+  $("mat").innerHTML=MAT.map(m=>`<details class="subj"><summary><div><h3>${esc(m.name)}</h3><span class="meta">${m.g.length} ${m.g.length>1?"blocos":"bloco"}</span></div><span class="pct">›</span></summary><div class="body">${m.g.map(g=>`<h4>${esc(g[0])}</h4><ul class="plain">${g[1].map(i=>`<li>${esc(i)}</li>`).join("")}</ul>`).join("")}</div></details>`).join("");
+}
+let fcCur=-1,fcFlip=false;
+function fcPool(){const f=$("fc-f").value;return FC.map((c,i)=>i).filter(i=>f==="all"||FC[i][0]===f)}
+function fcPick(){const pool=fcPool();if(!pool.length){fcCur=-1;return}
+  const w=pool.map(i=>{const r=st.fc[i]||{ok:0,ko:0};return 1+r.ko*2-Math.min(r.ok,3)*0.25});
+  let t=w.reduce((a,b)=>a+Math.max(.2,b),0),x=Math.random()*t,k=0;
+  for(;k<pool.length;k++){x-=Math.max(.2,w[k]);if(x<=0)break}
+  let n=pool[Math.min(k,pool.length-1)];if(n===fcCur&&pool.length>1)n=pool[(pool.indexOf(n)+1)%pool.length];fcCur=n;fcFlip=false}
+function renderFc(){
+  if(fcCur<0||!fcPool().includes(fcCur))fcPick();
+  const c=FC[fcCur];$("fc-card").classList.toggle("flip",fcFlip);
+  $("fc-side").textContent=fcFlip?"Resposta":"Pergunta · "+sname(c[0]);
+  $("fc-text").textContent=fcFlip?c[2]:c[1];
+  $("fc-hint").textContent=fcFlip?"Você sabia? Marque abaixo":"Toque para ver a resposta";
+  const pool=fcPool(),seen=pool.filter(i=>st.fc[i]).length,ok=pool.reduce((a,i)=>a+((st.fc[i]||{}).ok||0),0),ko=pool.reduce((a,i)=>a+((st.fc[i]||{}).ko||0),0);
+  $("fc-stat").textContent=`${pool.length} cartões nesta seleção · ${seen} já vistos · ${ok} acertos e ${ko} erros`;
+}
+function fcMark(okv){const r=st.fc[fcCur]||{ok:0,ko:0};if(okv)r.ok++;else r.ko++;st.fc[fcCur]=r;save();fcPick();renderFc()}
+function renderErr(){
+  const t=iso(today());
+  const due=st.err.map((e,i)=>({...e,i})).filter(e=>e.st<3&&e.due<=t).sort((a,b)=>a.due.localeCompare(b.due));
+  $("due-n").textContent=due.length;
+  $("due").innerHTML=due.length?due.map(e=>`<div class="duecard"><p><span class="tag">${esc(e.a)}</span>${esc(sname(e.m))}</p><p class="note" style="margin:4px 0">Errei pensando: ${esc(e.w)}</p><details><summary class="reveal">Mostrar a regra certa</summary><p style="margin:6px 0 0"><b>${esc(e.r)}</b></p></details><div class="btns" style="margin-top:10px"><button class="btn pri" data-eok="${e.i}" type="button">Lembrei</button><button class="btn" data-eko="${e.i}" type="button">Esqueci</button></div></div>`).join(""):`<p class="empty">Nada para revisar hoje. Quando errar uma questão, registre no formulário de novo erro.</p>`;
+  $("err-n").textContent=st.err.length;
+  const rows=st.err.map((e,i)=>({...e,i})).sort((a,b)=>b.d.localeCompare(a.d));
+  $("elist").innerHTML=rows.length?rows.map(e=>`<tr><td class="nw">${esc(e.d.split("-").reverse().join("/"))}</td><td>${esc(sname(e.m))}</td><td>${esc(e.a)}</td><td>${esc(e.r)}</td><td>${esc(e.k)}</td><td class="nw">${e.st>=3?`<span class="ok">Dominado</span>`:`${e.st+1}ª em ${esc(e.due.split("-").reverse().slice(0,2).join("/"))}`}</td><td><button class="x" data-ex="${e.i}" aria-label="Apagar" type="button">×</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Seu caderno ainda está vazio.</td></tr>`;
+  const dueEl=$("due-hero");if(dueEl)dueEl.textContent=due.length;
+}
+function addErr(m,a,w,r,k){const d=iso(today());st.err.push({d,m,a,w,r,k,st:0,due:addDays(d,ERR_STEPS[0])});save();renderErr();renderBk()}
+
+function all(){renderHero();renderWeek();renderSubjects();renderQ();renderS();renderMat();renderFc();renderErr();renderBk()}
+
+const VIEWS=["semana","materias","resumos","cards","erros","questoes","simulados","timer","metodo","edital"];
+function route(){const h=location.hash.slice(1);const v=VIEWS.includes(h)?h:"semana";VIEWS.forEach(x=>$("v-"+x).classList.toggle("on",x===v));document.querySelectorAll("#tabs a").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+v))}
+window.addEventListener("hashchange",route);
+
+document.addEventListener("change",e=>{const t=e.target;
+  if(t.dataset.k){st.done[t.dataset.k]=t.checked;save();renderHero();t.closest(".chk").classList.toggle("done",t.checked)}
+  if(t.dataset.t){st.topics[t.dataset.t]=t.checked;save();renderHero();renderSubjects()}
+});
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.w){sel=+b.dataset.w;renderHero();renderWeek();if(location.hash!=="#semana")location.hash="semana"}
+  if(b.dataset.qx){st.q.splice(+b.dataset.qx,1);save();renderQ();renderHero();renderBk()}
+  if(b.dataset.sx){st.s.splice(+b.dataset.sx,1);save();renderS();renderHero();renderBk()}
+});
+$("prev").onclick=()=>{if(sel>0){sel--;renderHero();renderWeek()}};
+$("next").onclick=()=>{if(sel<15){sel++;renderHero();renderWeek()}};
+$("q-date").value=iso(today());$("s-date").value=iso(today());
+$("qform").addEventListener("submit",e=>{e.preventDefault();const t=+$("q-tot").value,o=+$("q-ok").value;if(!t||o>t){$("q-ok").setCustomValidity("Acertos não podem passar do total");$("q-ok").reportValidity();return}
+  st.q.push({d:$("q-date").value,m:$("q-subj").value,t,o});save();$("q-tot").value="";$("q-ok").value="";renderQ();renderHero();renderBk()});
+$("q-ok").addEventListener("input",()=>$("q-ok").setCustomValidity(""));
+$("sform").addEventListener("submit",e=>{e.preventDefault();const di=$("s-di").value;
+  st.s.push({d:$("s-date").value,n:$("s-name").value.trim(),pt:+$("s-pt").value,es:+$("s-es").value,ge:+$("s-ge").value,di:di===""?null:+di});save();["s-name","s-pt","s-es","s-ge","s-di"].forEach(i=>$(i).value="");renderS();renderHero();renderBk()});
+
+$("bk-copy").onclick=async()=>{try{await navigator.clipboard.writeText($("bk").value);$("bk-msg").textContent="Copiado."}catch(e){$("bk").select();$("bk-msg").textContent="Selecionei o texto; copie manualmente."}};
+$("bk-load").onclick=()=>{try{const o=JSON.parse($("bk").value);if(typeof o!=="object"||!o)throw 0;st={done:o.done||{},topics:o.topics||{},q:Array.isArray(o.q)?o.q.filter(r=>r&&typeof r.d==="string"&&+r.t>0).map(r=>({d:r.d,m:String(r.m),t:+r.t,o:+r.o||0})):[],s:Array.isArray(o.s)?o.s.filter(r=>r&&typeof r.d==="string").map(r=>({d:r.d,n:String(r.n||""),pt:+r.pt||0,es:+r.es||0,ge:+r.ge||0,di:r.di===null||r.di===undefined?null:+r.di})):[],pomo:{d:"",n:0},err:Array.isArray(o.err)?o.err.filter(e=>e&&typeof e.d==="string"&&typeof e.due==="string").map(e=>({d:e.d,m:String(e.m),a:String(e.a||""),w:String(e.w||""),r:String(e.r||""),k:String(e.k||""),st:Math.max(0,Math.min(3,+e.st||0)),due:e.due})):[],fc:(o.fc&&typeof o.fc==="object")?Object.fromEntries(Object.entries(o.fc).filter(([k,v])=>FC[+k]&&v).map(([k,v])=>[k,{ok:+v.ok||0,ko:+v.ko||0}])):{}};save();fcCur=-1;all();$("bk-msg").textContent="Dados restaurados."}catch(e){$("bk-msg").textContent="Esse texto não é um backup válido."}};
+
+let tLeft=50*60,tRun=null,tStudy=true;
+const tShow=()=>{const m=Math.floor(tLeft/60),s=tLeft%60;$("clock").textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");$("tmode").textContent=tStudy?"Bloco de estudo":"Pausa";document.title=tRun?$("clock").textContent+" · "+(tStudy?"Estudo":"Pausa"):"Painel Oficial de Justiça"};
+const pomoCount=()=>{const d=iso(today());if(st.pomo.d!==d)st.pomo={d,n:0};$("t-count").textContent=st.pomo.n};
+const tSwitch=()=>{if(tStudy){pomoCount();st.pomo.n++;save();pomoCount()}tStudy=!tStudy;tLeft=(tStudy?50:10)*60;tShow()};
+$("t-go").onclick=()=>{if(tRun){clearInterval(tRun);tRun=null;$("t-go").textContent="Continuar"}else{const end=Date.now()+tLeft*1000;tRun=setInterval(()=>{tLeft=Math.max(0,Math.round((end-Date.now())/1000));if(tLeft===0){clearInterval(tRun);tRun=null;$("t-go").textContent="Iniciar";tSwitch()}tShow()},500);$("t-go").textContent="Pausar"}tShow()};
+$("t-reset").onclick=()=>{clearInterval(tRun);tRun=null;tStudy=true;tLeft=50*60;$("t-go").textContent="Iniciar";tShow()};
+$("t-skip").onclick=()=>{clearInterval(tRun);tRun=null;$("t-go").textContent="Iniciar";tSwitch()};
+
+
+$("fc-f").innerHTML=`<option value="all">Todas</option>`+S.filter(x=>FC.some(c=>c[0]===x.id)).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join("");
+$("e-m").innerHTML=S.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join("");
+$("fc-f").addEventListener("change",()=>{fcCur=-1;renderFc()});
+$("fc-card").onclick=()=>{fcFlip=!fcFlip;renderFc()};
+$("fc-ok").onclick=()=>fcMark(true);
+$("fc-ko").onclick=()=>fcMark(false);
+$("fc-skip").onclick=()=>{fcPick();renderFc()};
+$("fc-err").onclick=()=>{const c=FC[fcCur];addErr(c[0],"Flashcard",c[1],c[2],"Não sabia");renderHero();$("fc-err").textContent="Enviado ao caderno";setTimeout(()=>{$("fc-err").textContent="Mandar para o caderno de erros"},1500)};
+$("eform").addEventListener("submit",e=>{e.preventDefault();addErr($("e-m").value,$("e-a").value.trim(),$("e-w").value.trim(),$("e-r").value.trim(),$("e-k").value);["e-a","e-w","e-r"].forEach(i=>$(i).value="");renderHero()});
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.eok){const x=st.err[+b.dataset.eok];x.st++;x.due=x.st<3?addDays(iso(today()),ERR_STEPS[x.st]):x.due;save();renderErr();renderHero();renderBk()}
+  if(b.dataset.eko){const x=st.err[+b.dataset.eko];x.st=0;x.due=addDays(iso(today()),1);save();renderErr();renderHero();renderBk()}
+  if(b.dataset.ex){st.err.splice(+b.dataset.ex,1);save();renderErr();renderHero();renderBk()}
+});
+pomoCount();tShow();all();route();
+try{if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{})}catch(e){}
+}
+</script>
+</body>
+</html>
